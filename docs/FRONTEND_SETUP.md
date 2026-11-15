@@ -145,8 +145,7 @@ Validator lokal (membaca process environment, tidak otomatis membaca file `.env`
 python scripts/android_config.py
 ```
 
-Setelah konfigurasi aktual tersedia, jalankan workflow dari branch PR dan pilih development
-terlebih dahulu untuk pengujian native, lalu preview. Artifact hanya tersedia jika Gradle
+Setelah konfigurasi aktual tersedia dan workflow ini sudah masuk default branch lewat review/merge PR, buka Actions → Android internal APK → Run workflow. Pilih development terlebih dahulu untuk pengujian native, lalu preview. GitHub memerlukan file workflow_dispatch pada default branch; setelah terdaftar, branch build dapat dipilih. Artifact hanya tersedia jika Gradle
 benar-benar menghasilkan APK; tidak ada APK contoh atau pengganti berupa bundle JavaScript.
 Workflow memakai runner GitHub dengan JDK/Android SDK dan tidak memerlukan akun EAS.
 EAS profiles lama tetap tersedia sebagai alternatif bila akun/build quota sudah ada;
@@ -167,3 +166,5 @@ dan perilaku force-stop/baterai yang diamati. Tes emulator bukan pengganti tes H
 
 Referensi resmi: https://docs.expo.dev/build-reference/apk/ dan
 https://docs.expo.dev/versions/v55.0.0/sdk/notifications/
+
+Aturan dispatch GitHub: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow

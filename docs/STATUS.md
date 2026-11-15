@@ -2,6 +2,7 @@
 
 16 November 2026 (WIB). Koordinator: Integrasi & Pengujian.
 Branch: `feat/complete-mvp-integration`. Baseline main: `be3a811`.
+Draft PR: [#2](https://github.com/hailgar/AppFinance/pull/2). Tip kode dan dokumentasi awal: `8d6bd56`.
 MVP kode terintegrasi dan pemeriksaan otomatis lokal lulus; penerimaan layanan Google
 serta Android nyata masih terhambat konfigurasi/akses. Bukan klaim deployment/APK selesai.
 
@@ -27,7 +28,7 @@ serta Android nyata masih terhambat konfigurasi/akses. Bukan klaim deployment/AP
 - Validator Android:8 passed; bukan kompilasi atau pengujian APK.
 - Ekspor Android Hermes dan pemeriksaan kompatibilitas SDK offline: exit0.
 - Syntax Python/YAML/Bash, git diff --check dan pemeriksaan pola secret: lulus.
-- CI GitHub untuk branch/PR akan dicatat sesudah push. Hasil lokal bukan bukti CI.
+- CI GitHub pada tip `8d6bd56`: ketiga workflow push dan ketiga workflow pull_request selesai success. Workflow APK manual belum dijalankan; ia membutuhkan secrets aktual dan file dispatch pada default branch.
 
 ## Keputusan dan konflik yang diselesaikan
 
@@ -55,7 +56,7 @@ Tidak ada konflik pengguna yang ditimpa. Tidak ada force-push atau perubahan mai
 
 ## Langkah berikutnya
 
-Commit per scope → push branch → PR dan CI → setelah konfigurasi aman tersedia,
+Branch berisi commit per scope sudah dipush dan draft PR #2 dibuat; tiga CI lulus. Setelah konfigurasi aman tersedia dan workflow build masuk default branch melalui review/merge PR,
 bootstrap Sheet test, deploy satu worker, uji alur Google nyata, build development lalu
 preview APK, instal dan catat pengujian emulator/HP secara terpisah.
 
@@ -68,5 +69,10 @@ preview APK, instal dan catat pengujian emulator/HP secara terpisah.
 | reminders | `9e2629e` |
 | delivery | `49ab343` |
 
-Commit dokumentasi berikutnya menyimpan status ini. PR dibuat dari branch pekerjaan menuju main;
-CI untuk tip branch akan diverifikasi setelah upload.
+Commit dokumentasi `8d6bd56` menyimpan baseline status. Pembaruan dokumentasi berikutnya merekam PR dan hasil CI tersebut; tidak mengubah kode aplikasi.
+
+## CI pull request yang sudah diamati
+
+- [Frontend checks](https://github.com/hailgar/AppFinance/actions/runs/43773843337): success
+- [Backend checks](https://github.com/hailgar/AppFinance/actions/runs/43773843382): success
+- [FE-BE HTTP integration](https://github.com/hailgar/AppFinance/actions/runs/43773843341): success
