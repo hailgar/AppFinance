@@ -56,6 +56,30 @@ Tidak ada konflik pengguna yang ditimpa. Tidak ada force-push atau perubahan mai
 
 ## Langkah berikutnya
 
+### Persiapan biaya minimum (16 November 2026 WIB)
+
+- Dua spreadsheet Google Sheets native (database pribadi dan pengujian) dibuat di
+  Drive pengguna. Lima header backend diverifikasi via API, keduanya tanpa data
+  transaksi, zona waktu Asia/Jakarta, dan warning proteksi pada LedgerEvents.
+  Tautan/ID tidak dimasukkan ke repository publik. Belum ada identitas BE yang diberi
+  akses dan belum ada pembacaan/penulisan aplikasi ke Sheet nyata.
+- Firebase Spark dipilih untuk login Google gratis. Pengguna melewati pemasangan
+  plugin. Konsol web yang diperiksa meminta login Google; project, UID, OAuth dan
+  credential backend belum dibuat atau dihubungkan.
+- Kandidat hosting: Azure App Service Linux F1 ($0 dalam batas paket), dengan
+  checkpoint di /home/catat-data. Template, startup dan ZIP packager ada di
+  deploy/azure. F1 memiliki kuota CPU dan tanpa SLA. Tidak ada akun/resource Azure
+  yang dibuat, biaya yang disetujui, atau deployment yang dieksekusi.
+- Render Free tidak dipakai untuk konfigurasi sekarang karena filesystem ephemeral
+  tidak mempertahankan anchor checkpoint. Tidak mengendurkan pemeriksaan integritas.
+- APK mandiri ditargetkan lewat profil preview GitHub Actions runner standar pada
+  repository publik. Preflight sesi ini benar-benar dijalankan dan gagal pada URL
+  API HTTPS yang belum tersedia. SDK Android/javac, Firebase config dan signing
+  juga belum tersedia. Belum ada APK atau uji perangkat.
+- Tes setup Azure: 6 unittest lulus (private credential file, safe errors, project
+  mismatch, durable path, ZIP allowlist, free-only template). Paket ZIP dibuat dan
+  syntax Python diperiksa; validasi ARM oleh Azure dan deploy nyata belum dilakukan.
+
 Branch berisi commit per scope sudah dipush dan draft PR #2 dibuat; tiga CI lulus. Setelah konfigurasi aman tersedia dan workflow build masuk default branch melalui review/merge PR,
 bootstrap Sheet test, deploy satu worker, uji alur Google nyata, build development lalu
 preview APK, instal dan catat pengujian emulator/HP secara terpisah.

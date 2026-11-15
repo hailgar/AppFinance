@@ -1,5 +1,8 @@
 > Pemeriksaan FE–BE terbaru: lihat [INTEGRATION.md](INTEGRATION.md).
 
+> Hosting gratis untuk uji internal: [Azure App Service F1](../deploy/azure/README.md).
+> Template menjaga satu worker dan checkpoint persisten. Deployment belum dijalankan.
+
 # Catat Harian — Backend & Google Sheets v0.1
 
 Implementasi backend berdasarkan `docs/01_PRD.md` dan `docs/02_API_DAN_DATA.md`: FastAPI, Firebase Authentication, dan ledger append-only Google Sheets. Paket ini berisi backend, tes, OpenAPI aktual, serta alat setup/perawatan. Frontend Android dan penjadwalan notifikasi dikerjakan di bagian proyek masing-masing.
