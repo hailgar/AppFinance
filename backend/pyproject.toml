@@ -1,0 +1,9 @@
+[project]
+name = "catat-harian-backend"
+version = "0.1.0"
+description = "FastAPI + Firebase Authentication + append-only Google Sheets ledger"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: explicit opt-in tests against real Firebase and a separate test spreadsheet"]

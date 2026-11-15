@@ -1,0 +1,9 @@
+from typing import Protocol
+
+
+class LedgerRepository(Protocol):
+    def read_rows(self) -> list[list]: ...
+
+    def append(self, row: list) -> None: ...
+
+    def close(self) -> None: ...

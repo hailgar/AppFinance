@@ -1,0 +1,25 @@
+name: FE-BE HTTP integration
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: python -m pip install -r backend/requirements.lock
+      - run: npm ci
+        working-directory: mobile
+      - run: python scripts/test_backend_contract.py backend
