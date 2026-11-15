@@ -191,6 +191,102 @@
         ]
       }
     },
+    "/api/v1/storage/status": {
+      "get": {
+        "tags": [
+          "Operations"
+        ],
+        "summary": "Storage Status",
+        "operationId": "storage_status_api_v1_storage_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StorageStatus_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "FirebaseIDToken": []
+          }
+        ]
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "tags": [
@@ -2669,6 +2765,23 @@
         ],
         "title": "Envelope[PreferencesResponse]"
       },
+      "Envelope_StorageStatus_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/StorageStatus"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "request_id"
+        ],
+        "title": "Envelope[StorageStatus]"
+      },
       "Envelope_Transaction_": {
         "properties": {
           "data": {
@@ -3013,6 +3126,71 @@
           "time"
         ],
         "title": "Reminder"
+      },
+      "StorageStatus": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "OK",
+              "FAILED_RETRY_REQUIRED",
+              "DISABLED"
+            ],
+            "title": "Status"
+          },
+          "source_rows_processed": {
+            "type": "integer",
+            "title": "Source Rows Processed"
+          },
+          "projected_rows_processed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Rows Processed"
+          },
+          "projection_built_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Built At"
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code"
+          },
+          "retry_after_seconds": {
+            "type": "number",
+            "title": "Retry After Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "source_rows_processed",
+          "projected_rows_processed",
+          "projection_built_at",
+          "last_error_code",
+          "retry_after_seconds"
+        ],
+        "title": "StorageStatus"
       },
       "Transaction": {
         "properties": {

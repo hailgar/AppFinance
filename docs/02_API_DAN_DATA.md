@@ -1,6 +1,6 @@
 # Kontrak bersama FE dan BE — Catat Harian
 
-Versi 0.1. Gunakan bersama PRD. Kontrak ini spesifikasi implementasi, bukan OpenAPI yang sudah dihasilkan dari aplikasi.
+Versi 0.2. Gunakan bersama PRD. Penambahan operasional kompatibel: status proyeksi laporan dan pembaruan View otomatis. Kontrak ini spesifikasi implementasi, bukan OpenAPI yang sudah dihasilkan dari aplikasi.
 
 ## 1. Konvensi
 
@@ -35,6 +35,7 @@ HTTP: 200 baca/update/delete logis atau replay; 201 create pertama; 202 hasil wr
 | GET | `/summary/monthly` | `month=YYYY-MM` | income_total, expense_total, net_flow, expenses_by_category |
 | GET | `/preferences` | — | Dua reminder dan revision; default semua nonaktif |
 | PUT | `/preferences` | Seluruh preferensi + `expected_revision` | Preferensi tersimpan; tidak membuktikan izin/jadwal HP aktif |
+| GET | `/storage/status` | — | Status proyeksi laporan privat; tidak berisi nominal/catatan |
 | GET | `/operations/{key}` | — | Hasil mutasi APPLIED/CONFLICT atau UNKNOWN |
 
 Resource yang tidak dimiliki user diperlakukan 404. Rentang bulan valid dari bulan yang mencakup batas historis PRD sampai bulan berjalan. Monthly summary tidak mengembalikan saldo rekening. Budget ditampilkan lewat endpoint efektif; nilai default/override historis tidak dihitung dari setting hari ini.
@@ -139,7 +140,7 @@ Gunakan mutex aplikasi, satu worker, satu replica untuk MVP; tidak mengklaim duk
 - `PreferencesView`: jenis reminder, enabled, time, revision.
 - `Metadata`: schema_version, projection_built_at, source_rows_processed, projection_status.
 
-View dibangun ulang dari LedgerEvents lewat perintah admin lokal yang terdokumentasi; tidak boleh menjadi write path FE. Bila view refresh gagal setelah event commit, respons transaksi tetap mengikuti receipt sumber. Tampilkan status proyeksi di Metadata dan catat retry perawatan. Jangan rollback event hanya karena view gagal. Data API tidak boleh bergantung pada formula atau view ini.
+View diperbarui otomatis saat startup dan sesudah state ledger tervalidasi berubah, serta dapat dibangun ulang lewat perintah admin untuk perawatan. View tidak boleh menjadi write path FE. Retry latar belakang default setiap 30 detik memulihkan proyeksi gagal dan menangkap append UNKNOWN yang tiba terlambat. Bila view refresh gagal setelah event commit, respons transaksi tetap mengikuti receipt sumber. Tampilkan status proyeksi di Metadata, catat retry otomatis, dan sediakan status privat lewat GET `/storage/status`. Jangan rollback event hanya karena view gagal. Data API tidak boleh bergantung pada formula atau view ini.
 
 Bootstrap hanya membuat tab/header yang belum ada; tolak schema tak dikenal; tidak clear/reset spreadsheet. Export/restore harus mempertahankan urutan ledger dan memverifikasi reducer. Uji restore pada spreadsheet test baru.
 
@@ -166,3 +167,12 @@ catat-harian/
 ```
 
 Nama env FE: `EXPO_PUBLIC_API_BASE_URL`. Firebase native config dan OAuth Android configuration mengikuti library yang dipilih; nama public config tambahan harus dicatat oleh implementasi. Nama env BE: `GOOGLE_APPLICATION_CREDENTIALS`, `GOOGLE_SHEETS_SPREADSHEET_ID`, `FIREBASE_PROJECT_ID`, `ALLOWED_FIREBASE_UID`, `APP_ENV`, `LOG_LEVEL`. Hindari mengisi secret di contoh. Dokumentasikan Android application ID, fingerprint development/release, serta asal credential tanpa menyalin private key ke repo.
+
+## Status proyeksi laporan
+
+GET `/api/v1/storage/status` memakai Firebase ID token/allowlist seperti endpoint privat lain.
+Envelope `data` berisi `status` (OK/FAILED_RETRY_REQUIRED/PENDING),
+`source_rows_processed`, `projected_rows_processed`, `projection_built_at`,
+`last_error_code` dan `retry_after_seconds`. API keuangan tetap membaca ledger tervalidasi.
+Kegagalan View tidak membatalkan receipt APPLIED. Freshness ini bukan jaminan Google
+selalu tersedia; status tertinggal dapat diamati dan dipulihkan melalui retry.

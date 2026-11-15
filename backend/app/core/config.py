@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(default=120, ge=1)
     max_body_bytes: int = Field(default=16384, ge=1024, le=65536)
     cors_origins: list[str] = []
+    projection_retry_seconds: float = Field(default=30, ge=5, le=300)
 
     @field_validator("allowed_firebase_uid", "firebase_project_id")
     @classmethod

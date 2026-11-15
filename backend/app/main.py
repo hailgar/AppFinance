@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -18,6 +19,7 @@ from app.repositories.sheets import SheetsRepository
 from app.schemas.responses import ErrorEnvelope
 from app.services.domain import utc_now
 from app.services.ledger import LedgerService
+from app.services.projections import ProjectionManager
 
 
 def create_app(settings=None, repository=None, verifier=None, clock=utc_now):
@@ -30,6 +32,7 @@ def create_app(settings=None, repository=None, verifier=None, clock=utc_now):
     async def lifespan(app):
         config.check_runtime()
         lease, repo, auth_verifier = None, None, None
+        projection_stop, projection_task = asyncio.Event(), None
         try:
             if repository is None:
                 lease = ProcessLease(config.ledger_checkpoint_path)
@@ -39,11 +42,31 @@ def create_app(settings=None, repository=None, verifier=None, clock=utc_now):
             auth_verifier = verifier if verifier is not None else await run_in_threadpool(
                 FirebaseVerifier, config.firebase_project_id, config.google_application_credentials)
             checkpoint = None if repository is not None else Checkpoint(config.ledger_checkpoint_path, config.google_sheets_spreadsheet_id)
-            app.state.ledger = LedgerService(repo, checkpoint, config.cache_ttl_seconds, clock)
+            projection = ProjectionManager(repo, config.allowed_firebase_uid, config.projection_retry_seconds)
+            app.state.ledger = LedgerService(repo, checkpoint, config.cache_ttl_seconds, clock, projection)
             app.state.verifier, app.state.config = auth_verifier, config
             await run_in_threadpool(app.state.ledger.state, True)
+
+            async def projection_worker():
+                while True:
+                    try:
+                        await asyncio.wait_for(projection_stop.wait(), timeout=config.projection_retry_seconds)
+                        return
+                    except TimeoutError:
+                        pass
+                    try:
+                        await run_in_threadpool(app.state.ledger.refresh_projections)
+                    except Exception as exc:
+                        # A corrupt/unavailable source is never projected. Preserve
+                        # the last report and retry; API reads still fail closed.
+                        logging.getLogger(__name__).warning("projection_retry_source_unavailable type=%s", type(exc).__name__)
+
+            projection_task = asyncio.create_task(projection_worker())
             yield
         finally:
+            projection_stop.set()
+            if projection_task:
+                await projection_task
             if repo:
                 await run_in_threadpool(repo.close)
             if auth_verifier and hasattr(auth_verifier, "close"):

@@ -44,6 +44,12 @@ def test_real_firebase_sheet_write_and_reopen():
         assert first.status_code == 201
         second = client.post("/api/v1/transactions", json=body, headers={"Idempotency-Key": key})
         assert second.status_code == 200 and second.json()["data"] == first.json()["data"]
+        projection = client.get("/api/v1/storage/status")
+        assert projection.status_code == 200 and projection.json()["data"]["status"] == "OK"
+        assert projection.json()["data"]["source_rows_processed"] == 2
+        report = store.read_tab("TransactionsView")
+        assert len(report) == 2 and report[1][0] == body["id"] and report[1][3] == 35000
+        assert store.read_tab("Metadata")[1][-1] == "OK"
     with TestClient(create_app(config, repo(), FirebaseVerifier(config.firebase_project_id, config.google_application_credentials)),
                     headers=headers) as reopened:
         data = reopened.get("/api/v1/dashboard", params={"date": day})

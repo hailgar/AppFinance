@@ -116,3 +116,12 @@ class Category(BaseModel):
     code: str
     label: str
     type: Literal["EXPENSE", "INCOME"]
+
+
+class StorageStatus(BaseModel):
+    status: Literal["PENDING", "OK", "FAILED_RETRY_REQUIRED", "DISABLED"]
+    source_rows_processed: int
+    projected_rows_processed: int | None
+    projection_built_at: str | None
+    last_error_code: str | None
+    retry_after_seconds: float

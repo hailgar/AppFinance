@@ -12,11 +12,12 @@ log = logging.getLogger(__name__)
 
 
 class LedgerService:
-    def __init__(self, repository, checkpoint=None, ttl=2, clock=utc_now):
+    def __init__(self, repository, checkpoint=None, ttl=2, clock=utc_now, projection=None):
         self.repository, self.checkpoint, self.ttl, self.clock = repository, checkpoint, ttl, clock
         self.lock = RLock()
         self._state = None
         self._loaded_at = 0
+        self.projection = projection
 
     def state(self, force=False):
         with self.lock:
@@ -33,7 +34,24 @@ class LedgerService:
                 self.checkpoint.save(rows)
             self._state, self._loaded_at = state, time.monotonic()
             log.info("ledger_replay rows=%d duration_ms=%.1f", state.rows_processed, (time.monotonic() - started) * 1000)
+            if self.projection is not None:
+                self.projection.sync(state, stamp(self.clock()))
             return state
+
+    def refresh_projections(self):
+        # Force a validated replay to include any append that arrived after a
+        # request returned UNKNOWN. The same RLock serializes foreground writers.
+        with self.lock:
+            self.state(force=True)
+
+    def storage_status(self):
+        with self.lock:
+            self.state(force=True)
+            if self.projection is None:
+                return {"status": "DISABLED", "source_rows_processed": self._state.rows_processed,
+                        "projected_rows_processed": None, "projection_built_at": None,
+                        "last_error_code": None, "retry_after_seconds": 0}
+            return self.projection.status()
 
     def mutate(self, uid, key, kind, entity_id, action, expected, model):
         command = normalize(model)

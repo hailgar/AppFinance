@@ -4,7 +4,7 @@
 
 Implementasi backend berdasarkan `docs/01_PRD.md` dan `docs/02_API_DAN_DATA.md`: FastAPI, Firebase Authentication, dan ledger append-only Google Sheets. Paket ini berisi backend, tes, OpenAPI aktual, serta alat setup/perawatan. Frontend Android dan penjadwalan notifikasi dikerjakan di bagian proyek masing-masing.
 
-Status verifikasi: **52 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
+Status verifikasi: **57 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
 
 ## Yang sudah diimplementasikan
 
@@ -143,7 +143,7 @@ python -m scripts.admin validate
 python -m scripts.admin rebuild-views
 ```
 
-Views tidak otomatis diperbarui pada setiap transaksi. Jalankan rebuild setelah berhenti memakai aplikasi atau saat ingin memeriksa Sheet. Jika gagal, jalankan ulang rebuild; jangan mengulang transaksi yang receipt-nya sudah APPLIED. Metadata menyimpan status `BUILDING`, `OK`, atau `FAILED_RETRY_REQUIRED` bila dapat ditulis.
+Views otomatis diperbarui saat startup dan perubahan state ledger. Kegagalan proyeksi tidak mengubah transaksi APPLIED; Metadata menyimpan kegagalan bila masih dapat ditulis. Background retry (PROJECTION_RETRY_SECONDS=30, rentang 5–300) memperbaiki View tanpa transaksi baru dan menangkap append terlambat. GET /api/v1/storage/status memperlihatkan freshness pada akun terautentikasi. Rebuild manual tetap tersedia untuk perawatan saat backend dihentikan; jangan mengulang transaksi hanya karena View tertinggal.
 
 Backup menggunakan JSON agar teks seperti `=SUM(...)` tetap literal dan urutan ledger terjaga. Siapkan direktori backup privat di luar repo, kemudian:
 
@@ -182,3 +182,37 @@ Restore hanya menerima ledger target kosong, mempertahankan urutan, memverifikas
 - [google-auth AuthorizedSession](https://google-auth.readthedocs.io/en/latest/reference/google.auth.transport.requests.html)
 - [Firebase ID token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
 - [Firebase session revocation](https://firebase.google.com/docs/auth/admin/manage-sessions)
+
+## Hosting internal yang sudah tersedia
+
+Konfigurasi provider netral tersedia di `backend/Dockerfile`, `deploy/compose.yaml`,
+dan `deploy/Caddyfile`. Tidak ada provider/VM/layanan berbayar yang dibuat oleh sesi ini.
+Image belum dibangun karena Docker tidak tersedia dalam lingkungan pemeriksaan.
+
+Prasyarat: host Linux yang sudah tersedia dengan Docker Compose, domain DNS ke host,
+port 80/443 dapat diakses, serta Firebase project/UID dan spreadsheet test privat yang benar.
+Gunakan satu instance dan satu worker. Named volume `ledger-data` menyimpan checkpoint
+melintasi restart; jangan menjalankan replica kedua atau membuang volume untuk reset.
+
+Pada host tersebut, dari root repository:
+
+```bash
+cp deploy/.env.example deploy/.env
+# Isi konfigurasi lokal, simpan credential JSON di luar repository.
+docker compose --env-file deploy/.env -f deploy/compose.yaml config --quiet
+docker compose --env-file deploy/.env -f deploy/compose.yaml build backend
+docker compose --env-file deploy/.env -f deploy/compose.yaml run --rm --no-deps backend python -m scripts.admin bootstrap
+docker compose --env-file deploy/.env -f deploy/compose.yaml up -d
+```
+
+Credential dimount sebagai `/run/secrets/google-credentials.json` hanya-baca. Container
+berjalan sebagai UID/GID 10001; file-backed Compose secrets dapat mempertahankan izin host.
+Pastikan file dapat dibaca oleh UID 10001 tanpa membuka akses umum, sesuai kebijakan host.
+Jangan menaruh private key di image atau `.env` publik. Hanya proxy mengekspos port host.
+Caddy mengurus HTTPS untuk hostname yang benar; TLS/ACME baru dapat diverifikasi pada host.
+
+Verifikasi health HTTPS, token tidak valid (401), UID lain (403), satu transaksi dengan
+akun yang diizinkan, View+Metadata, restart, dan baca ulang; gunakan Sheet test terpisah.
+Belum ada URL deployment atau bukti pemeriksaan ini dalam sesi sekarang.
+
+Referensi resmi: https://caddyserver.com/docs/quick-starts/reverse-proxy

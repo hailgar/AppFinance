@@ -12,7 +12,7 @@ from app.schemas.commands import (
 )
 from app.schemas.responses import (
     BudgetDefault, Category, DailyBudget, Dashboard, Deleted, EffectiveBudget, Envelope,
-    Me, MonthlySummary, Operation, Page, Transaction, UnknownOperation,
+    Me, MonthlySummary, Operation, Page, StorageStatus, Transaction, UnknownOperation,
 )
 from app.services.queries import Queries
 
@@ -54,6 +54,11 @@ def live(request: Request):
 @router.get("/me", response_model=Envelope[Me], tags=["Account"])
 def me(request: Request, claims: Identity):
     return reply(request, {"uid": claims["uid"], "display_name": claims.get("name"), "currency": "IDR", "timezone": "Asia/Jakarta"})
+
+
+@router.get("/storage/status", response_model=Envelope[StorageStatus], tags=["Operations"])
+def storage_status(request: Request, claims: Identity):
+    return reply(request, request.app.state.ledger.storage_status())
 
 
 @router.get("/categories", response_model=Envelope[Page[Category]], tags=["Transactions"])
