@@ -24,17 +24,17 @@ PRD dan kontrak v0.1 dibaca sebelum implementasi: `01_PRD.md` dan `02_API_DAN_DA
 - Cache keuangan hanya di memori; satu command unresolved disimpan privat untuk recovery. Tidak ada antrean transaksi offline.
 - Riwayat rentang tanggal dan pagination cursor; ringkasan total bulanan; logout dengan peringatan jika operasi belum pasti.
 
-## Belum diimplementasikan
+## Status implementasi terbaru
 
-Iterasi berikutnya mengikuti urutan prompt setelah alur nyata diverifikasi:
+Budget default/override, detail/edit/hapus transaksi, filter jenis/kategori, rincian
+kategori bulanan, onboarding opsional dan reminder lokal kini diimplementasikan pada
+branch pekerjaan. Editor memakai expected_revision/tombstone dan stable operation ID.
+Logika reminder mencakup izin, dua jadwal, rekonsiliasi, preferensi offline/recovery,
+konflik server dan pembatalan logout; belum ada bukti pengiriman pada perangkat nyata.
 
-1. Editor budget default/override dari kartu Beranda, termasuk revision/tombstone.
-2. Detail, edit/hapus dengan konfirmasi dan pemulihan konflik revision; filter jenis/kategori riwayat; rincian ringkasan per kategori.
-3. Onboarding budget/reminder.
-4. Reminder lokal: permission, channel, dua jadwal, rekonsiliasi startup/resume, backup preferences/revision, pembatalan saat logout. Saat ini aplikasi **tidak menjadwalkan notifikasi**.
-5. Uji Android fisik: TalkBack, teks besar, layar 360–430 dp, nominal 12 digit, keyboard, background, reboot, timezone, izin ditolak, offline, logout; build APK.
-
-Riwayat/ringkasan awal sudah membaca endpoint nyata; fitur yang belum ada tidak digantikan data palsu.
+Tersisa untuk penerimaan: konfigurasi Firebase/Sheet/HTTPS/signing, Android SDK atau
+runner build yang dikonfigurasi, APK aktual, dan pengujian fisik. Lihat STATUS.md serta
+bagian build internal di bawah. Tidak ada mock yang dipakai untuk mengklaim Google nyata.
 
 ## Menjalankan di komputer pengembangan
 
@@ -109,3 +109,61 @@ Tidak ada retry otomatis mutasi, logging token/catatan, akses langsung Google Sh
 - `mobile/src/services/`: API, autentikasi native, command recovery, secure vault.
 - `mobile/src/session.tsx`: sesi, cache memori, pemulihan dan logout.
 - `mobile/src/__tests__/`: tes aturan domain, 401/403, dan operasi belum pasti.
+
+## Pembaruan MVP dan build internal
+
+Implementasi kini mencakup editor budget default/override, detail/edit/hapus transaksi,
+filter riwayat jenis/kategori, rincian kategori bulanan, pengenalan opsional, dan reminder
+lokal. Lihat STATUS.md untuk bukti pemeriksaan dan gap native terbaru; catatan iterasi 1
+di atas merupakan riwayat awal dan bukan status implementasi terkini.
+
+Workflow manual `.github/workflows/android-internal.yml` menyediakan profil development
+(dev client, Metro diperlukan) dan preview (APK mandiri internal). Workflow tidak
+berjalan otomatis pada push dan belum dijalankan tanpa konfigurasi aktual berikut.
+
+Repository variables:
+
+- `EXPO_PUBLIC_API_BASE_URL`: HTTPS termasuk `/api/v1`.
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`: Web OAuth client ID dari Firebase yang sama.
+- `ANDROID_APPLICATION_ID`: opsional; default `id.catatharian.app`, harus cocok Firebase.
+
+Repository secrets, masukkan lewat mekanisme secret GitHub, bukan chat/source publik:
+
+- `GOOGLE_SERVICES_JSON_BASE64`: konfigurasi Android Firebase, bukan service account BE.
+- `ANDROID_KEYSTORE_BASE64`: keystore signing internal yang stabil.
+- `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+
+Register SHA-1 dan SHA-256 sertifikat keystore pada aplikasi Android Firebase, aktifkan
+Google Sign-In, dan unduh ulang google-services.json. Workflow mengekspor fingerprint
+sertifikat tanpa password ke ringkasan build dan memeriksa SHA-1/package/Web client ID
+terhadap config sebelum kompilasi. Keystore yang sama dipakai untuk debug maupun preview
+agar identitas signing stabil. Jangan memakai private Admin credential untuk build mobile.
+
+Validator lokal (membaca process environment, tidak otomatis membaca file `.env`):
+
+```bash
+python scripts/android_config.py
+```
+
+Setelah konfigurasi aktual tersedia, jalankan workflow dari branch PR dan pilih development
+terlebih dahulu untuk pengujian native, lalu preview. Artifact hanya tersedia jika Gradle
+benar-benar menghasilkan APK; tidak ada APK contoh atau pengganti berupa bundle JavaScript.
+Workflow memakai runner GitHub dengan JDK/Android SDK dan tidak memerlukan akun EAS.
+EAS profiles lama tetap tersedia sebagai alternatif bila akun/build quota sudah ada;
+resource berbayar baru tidak dibuat otomatis.
+
+Uji pemasangan pada perangkat sendiri setelah artifact APK tersedia:
+
+```bash
+adb devices
+adb install -r path/to/app.apk
+```
+
+Development client memerlukan Metro (`cd mobile && npm start`). Preview berisi bundle
+mandiri. Uji login, catat pengeluaran, reload/login ulang, budget, edit/hapus/filter,
+error koneksi dan logout. Untuk reminder fisik: izin ditolak, ubah jam, disable,
+background, layar terkunci, offline, reboot, timezone dan logout. Catat model/versi Android
+dan perilaku force-stop/baterai yang diamati. Tes emulator bukan pengganti tes HP fisik.
+
+Referensi resmi: https://docs.expo.dev/build-reference/apk/ dan
+https://docs.expo.dev/versions/v55.0.0/sdk/notifications/

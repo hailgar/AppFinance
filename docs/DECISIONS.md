@@ -1,3 +1,5 @@
+> Riwayat keputusan iterasi1. Status implementasi terkini ada di STATUS.md; PRD/API v0.2 mencatat pembaruan laporan otomatis.
+
 # Keputusan implementasi iterasi 1
 
 16 November 2026

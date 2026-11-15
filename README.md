@@ -13,21 +13,23 @@ harian, dan reminder pencatatan. UI berbahasa Indonesia; pembukuan memakai WIB.
 | `scripts/` | Runner tes integrasi FE–BE |
 
 FE mengakses FastAPI; hanya backend yang mengakses Google Sheets.
-Reminder dijadwalkan di perangkat Android pada tahap berikutnya.
+Reminder dijadwalkan lokal di Android; konfirmasi pengiriman pada HP fisik masih diperlukan.
 
 ## Status yang sudah diverifikasi
 
-- FE: typecheck, lint, 26 tes unit dan ekspor bundle Android lulus.
-- BE: 52 tes lulus dengan `requirements.lock`; 1 tes Firebase/Sheets nyata dilewati.
-- Integrasi HTTP: 5 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
+- FE: typecheck, lint, 57 tes unit dan ekspor bundle Android lulus.
+- BE: 57 tes lulus dengan `requirements.lock`; 1 tes Firebase/Sheets nyata dilewati.
+- Integrasi HTTP: 7 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
 - Parser kategori FE diperbaiki untuk respons `data.items` dari backend.
 - Workflow GitHub Actions tersedia untuk pemeriksaan FE, BE dan integrasi HTTP.
   Hasil eksekusi GitHub Actions diperiksa setelah push; pengujian lokal bukan bukti CI lulus.
 
-**Belum diverifikasi:** login Google native, Google Sheets nyata, perangkat Android,
-dan APK. Ekspor JavaScript/Hermes bukan APK. Frontend masih iterasi 1; editor budget,
-detail/edit/hapus transaksi, beberapa filter, onboarding dan reminder lokal belum lengkap.
-Tidak ada deployment otomatis.
+**Status terbaru:** lihat [docs/STATUS.md](docs/STATUS.md). Budget default/override,
+detail/edit/hapus transaksi, filter, rincian kategori, pengenalan dan reminder lokal sudah
+diimplementasikan pada branch pekerjaan. Views Sheets kini diperbarui otomatis dengan retry.
+Login Google native, Google Sheets nyata, deployment HTTPS, perangkat Android dan APK
+masih membutuhkan konfigurasi/akses yang disebutkan pada status. Ekspor JavaScript/Hermes bukan APK.
+Tidak ada deployment atau resource berbayar baru yang dibuat otomatis.
 
 ## Menjalankan dan menguji
 
@@ -63,9 +65,9 @@ Dari root repository, gunakan Python environment backend untuk menjalankan suite
 python scripts/test_backend_contract.py backend
 ```
 
-Runner memulai fixture loopback baru, menjalankan lima tes, lalu menghentikannya.
+Runner memulai fixture loopback baru, menjalankan tujuh tes, lalu menghentikannya.
 Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nyata.
-`npm test` biasa melewati lima tes HTTP kecuali env opt-in disediakan.
+`npm test` biasa melewati tujuh tes HTTP kecuali env opt-in disediakan.
 
 ## Dokumen
 
@@ -74,6 +76,8 @@ Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nya
 - [OpenAPI](docs/openapi.json)
 - [Hasil dan batas pengujian integrasi](docs/INTEGRATION.md)
 - [Handoff backend](docs/HANDOFF_BACKEND.md)
+- [Status dan pembagian pekerjaan](docs/STATUS.md)
+- [Aturan kerja](AGENTS.md)
 
 Simpan `.env`, service-account key dan keystore di luar Git. Backend hanya menerima
 UID Firebase yang diizinkan; tidak ada autentikasi bypass dalam runtime produksi.

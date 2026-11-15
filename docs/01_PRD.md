@@ -1,6 +1,8 @@
 # PRD — Catat Harian
 
-Versi 0.1 · 16 November 2026 · Status: rancangan awal untuk ditinjau sebelum implementasi.
+Versi 0.2 · 16 November 2026 · Implementasi MVP berjalan; penerimaan Firebase/Sheets dan Android nyata belum terverifikasi.
+
+Keputusan terbaru pengguna: backend harus tersedia melalui hosting dan Sheet menjadi database sekaligus laporan terkini. Implementasi, pengujian, branch/commit/push/PR, deployment internal pada lingkungan yang sudah ada, dan APK internal diizinkan; resource berbayar baru tetap memerlukan keputusan pengguna.
 
 ## 1. Tujuan dan asumsi
 
@@ -94,7 +96,7 @@ Setiap layar memiliki loading, kosong, error dan retry. Contoh empty state: “B
 
 Sheets dipakai untuk MVP pribadi dengan volume rendah. Backend MVP satu instance, satu worker penulis. Jangan menganggap Sheet memiliki unique constraint, transaksi database lintas request, atau kemampuan multiwriter setara PostgreSQL.
 
-Untuk menjaga riwayat dan mencegah pengeluaran terhitung ganda akibat retry, gunakan tab sumber append-only `LedgerEvents`, kemudian bentuk state terkini di backend. Tab `TransactionsView`, `BudgetsView`, dan `PreferencesView` adalah proyeksi baca yang dapat dibangun ulang untuk memudahkan pemeriksaan di Google Sheets. API membaca sumber/cache yang tervalidasi, bukan bergantung pada proyeksi yang mungkin tertinggal. Detail kontrak pada `02_API_DAN_DATA.md`.
+Untuk menjaga riwayat dan mencegah pengeluaran terhitung ganda akibat retry, gunakan tab sumber append-only `LedgerEvents`, kemudian bentuk state terkini di backend. Tab `TransactionsView`, `BudgetsView`, dan `PreferencesView` adalah proyeksi baca yang diperbarui otomatis dari ledger tervalidasi saat startup dan sesudah perubahan. Jika pembaruan gagal, receipt transaksi tetap berlaku; Metadata mencatat kegagalan dan BE mencoba ulang berkala (default 30 detik). Proyeksi juga dapat dibangun ulang untuk perawatan. Status freshness tersedia lewat endpoint privat `/storage/status`. API membaca sumber/cache yang tervalidasi, bukan bergantung pada proyeksi yang mungkin tertinggal. Detail kontrak pada `02_API_DAN_DATA.md`.
 
 Spreadsheet privat; hanya pemilik dan service account BE yang diberi akses. Pengguna membaca tab View. Edit/hapus/sort baris tab sumber secara manual tidak didukung; koreksi melalui aplikasi. Gunakan proteksi range dan batasi editor. Setup tidak menghapus spreadsheet yang sudah ada. Siapkan spreadsheet pengujian terpisah.
 

@@ -1,29 +1,29 @@
-# Pemeriksaan aktual — iterasi 1
+# Pemeriksaan aktual
 
-16 November 2026. Runtime pemeriksaan: Linux, Node 24.22.1, npm 11.9.0.
+16 November 2026 (WIB), branch feat/complete-mvp-integration. Node24.22.1/npm11.9.0,
+Python3.12.14 virtual environment terpisah memakai requirements.lock.
 
-| Pemeriksaan | Hasil |
+| Perintah / pemeriksaan | Hasil aktual |
 |---|---|
-| `npm run typecheck` | Lulus, exit 0 |
-| `npm run lint` | Lulus, exit 0, tanpa warning lint |
-| `npm test` | 3 file, 25 tes lulus |
-| `EXPO_OFFLINE=1 npm run check:expo` | Exit 0: Dependencies are up to date; memakai daftar kompatibilitas bawaan SDK. Expo memberi peringatan validasi offline; React Native Directory tidak dapat diakses. |
-| `EXPO_OFFLINE=1 npm run export:android` | Exit 0, bundle Hermes Android berhasil. Peringatan konfigurasi `android.googleServicesFile` karena file Firebase belum disediakan. Bukan native build/APK. |
-| Graph paket `npm ls --depth=0` | Diperiksa; paket utama tercantum di lockfile |
-| Firebase/Google login pada HP | Belum diuji; konfigurasi akun/signing belum tersedia |
-| FastAPI dan Google Sheets | Belum diuji; URL backend, allowlist UID, dan OpenAPI live belum tersedia |
-| Build APK development/release | Belum dilakukan; Android SDK/adb/perangkat tidak tersedia |
-| Layout 360–430 dp, TalkBack, teks besar | Belum diverifikasi visual/native |
-| Reminder background/reboot/timezone/logout | Belum diimplementasikan pada iterasi ini |
+| mobile: npm run typecheck | Lulus exit0 |
+| mobile: npm run lint | Lulus exit0 |
+| mobile: npm test | 57 passed, 7 HTTP skipped (mode unit) |
+| backend: python -m pytest tests -q | 57 passed, 1 Google-live skipped, 1 deprecation warning |
+| python scripts/test_backend_contract.py backend | 7 passed melalui HTTP nyata, storage/auth test adapters |
+| python -m pytest scripts/tests -q | 8 passed, validator build saja |
+| EXPO_OFFLINE=1 npm run check:expo | Dependencies up to date, exit0; offline validation warning |
+| EXPO_OFFLINE=1 npm run export:android | Bundle Hermes exit0, warning config Firebase belum ada; bukan APK |
+| git diff --check | Lulus |
+| Python AST, workflow/Compose YAML, bash -n | Lulus syntax; Docker/Gradle belum dijalankan |
+| python scripts/android_config.py | Exit1 yang diharapkan: API base HTTPS/config aktual belum tersedia |
 
-Tes domain: pemisahan tampilan/payload rupiah, penolakan input invalid/desimal/negatif/nominal berlebih, budget null/Rp0/kelebihan, batas hari WIB dan validasi tanggal kalender/rentang.
+Tes FE mencakup17 skenario reminder dengan device/store/API adapter terinjeksi,
+nominal/WIB, editor/revision, operasi UNKNOWN,401/403, deadline token/body, dan
+UID sesi berubah saat refresh. Test fixture dan source Expo bukan bukti pengiriman
+notifikasi di Android.
 
-Tes API: 401 melakukan satu refresh SDK dengan body/key tetap; 401 berulang berhenti; 403 tidak memicu refresh/login otomatis.
+Belum diuji: Firebase login nyata, Google Sheets nyata, Docker/TLS deployment,
+Gradle signed APK, emulator, HP fisik, TalkBack/layar sempit/teks besar, serta
+reminder setelah reboot/force-stop/penghemat baterai. Kriteria ini tetap terbuka.
 
-Tes command: 202/UNKNOWN/restart mempertahankan key/body, timeout diperiksa via receipt, replacement diblokir selama unresolved, 409 menunggu review, secure storage gagal tidak mengirim, lookup offline tidak mengirim POST ulang, dan 422 membolehkan perbaikan input.
-
-Tidak ada klaim bahwa simpan telah terbukti persisten setelah reload ke server/Sheet. Tidak ada data dummy atau mock yang digunakan untuk menyatakan integrasi berhasil.
-
-## Pembaruan pemeriksaan integrasi
-
-Lihat `INTEGRATION.md` untuk hasil terkini. Kategori FE kini memakai `data.items` dan telah diuji lewat HTTP ke FastAPI dengan auth/storage khusus tes. Firebase/Sheets nyata, reminder, dan APK belum diverifikasi.
+Status CI/commit/PR serta dependensi pengguna tercatat pada STATUS.md.

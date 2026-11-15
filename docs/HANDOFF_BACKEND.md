@@ -54,3 +54,7 @@ Langkah penerusan: isi konfigurasi lokal dan siapkan spreadsheet test → bootst
 ## Pemeriksaan lintas FE–BE
 
 Lima tes klien FE lewat HTTP ke FastAPI lulus dengan fixture test terisolasi. Lihat `INTEGRATION.md`. Ini tidak menggantikan tes Google Sheets/Firebase nyata.
+
+## Pembaruan implementasi v0.2
+
+Lihat STATUS.md dan INTEGRATION.md untuk hasil terbaru:57 tes BE,7 tes HTTP, proyeksi Sheets otomatis dengan retry, status privat dan konfigurasi Docker. Catatan v0.1 di atas adalah baseline historis. Google nyata/Docker/TLS belum diverifikasi.
