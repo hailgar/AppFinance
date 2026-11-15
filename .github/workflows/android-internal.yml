@@ -1,0 +1,80 @@
+name: Android internal APK (configured secrets required)
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        type: choice
+        description: Development client or standalone internal APK
+        options: [development, preview]
+        default: development
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PROFILE: ${{ inputs.profile }}
+      ANDROID_APPLICATION_ID: ${{ vars.ANDROID_APPLICATION_ID || 'id.catatharian.app' }}
+      EXPO_PUBLIC_API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check required build secrets
+        run: python .github/scripts/prepare_android.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Check signing fingerprint against Firebase
+        shell: bash
+        run: |
+          keytool -exportcert -keystore "$ANDROID_KEYSTORE_PATH" -storepass:env ANDROID_STORE_PASSWORD -alias "$ANDROID_KEY_ALIAS" -file "$RUNNER_TEMP/catat-certificate.der"
+          python - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          cert = (Path(os.environ['RUNNER_TEMP']) / 'catat-certificate.der').read_bytes()
+          sha1, sha256 = hashlib.sha1(cert).hexdigest().upper(), hashlib.sha256(cert).hexdigest().upper()
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('ANDROID_SIGNING_SHA1=' + sha1 + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+              output.write('Signing SHA-1: `' + sha1 + '`\n\nSigning SHA-256: `' + sha256 + '`\n')
+          PY
+          python scripts/android_config.py
+      - run: npm ci
+        working-directory: mobile
+      - run: npx expo prebuild --platform android --no-install
+        working-directory: mobile
+      - name: Compile signed APK
+        shell: bash
+        working-directory: mobile/android
+        run: |
+          if [ "$PROFILE" = development ]; then
+            ./gradlew -I ../../.github/scripts/internal-signing.init.gradle :app:assembleDebug --no-daemon
+          else
+            ./gradlew -I ../../.github/scripts/internal-signing.init.gradle :app:assembleRelease --no-daemon
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: catat-harian-${{ inputs.profile }}-apk
+          path: mobile/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove temporary credentials
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/catat-android" "$RUNNER_TEMP/catat-certificate.der"
