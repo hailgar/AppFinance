@@ -19,6 +19,7 @@ const config: ExpoConfig = {
     "@react-native-firebase/auth",
     "@react-native-google-signin/google-signin",
     "expo-secure-store",
+    ["expo-notifications", { defaultChannel: "daily-reminders" }],
   ],
 };
 export default config;
