@@ -13,20 +13,22 @@ harian, dan reminder pencatatan. UI berbahasa Indonesia; pembukuan memakai WIB.
 | `scripts/` | Runner tes integrasi FE–BE |
 
 FE mengakses FastAPI; hanya backend yang mengakses Google Sheets.
-Reminder dijadwalkan di perangkat Android pada tahap berikutnya.
+Reminder lokal Android kini diimplementasikan; verifikasi pengiriman nyata pada HP masih diperlukan.
 
 ## Status yang sudah diverifikasi
 
-- FE: typecheck, lint, 26 tes unit dan ekspor bundle Android lulus.
+- FE: typecheck, lint, 52 tes unit dan ekspor bundle Android lulus.
+- Reminder: dua jadwal, izin/kanal, pengaturan offline, sinkronisasi preferensi,
+  rekonsiliasi startup/resume, tap notifikasi, dan pembatalan logout sudah tersedia.
 - BE: 52 tes lulus dengan `requirements.lock`; 1 tes Firebase/Sheets nyata dilewati.
-- Integrasi HTTP: 5 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
+- Integrasi HTTP: 7 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
 - Parser kategori FE diperbaiki untuk respons `data.items` dari backend.
 - Workflow GitHub Actions tersedia untuk pemeriksaan FE, BE dan integrasi HTTP.
   Hasil eksekusi GitHub Actions diperiksa setelah push; pengujian lokal bukan bukti CI lulus.
 
 **Belum diverifikasi:** login Google native, Google Sheets nyata, perangkat Android,
 dan APK. Ekspor JavaScript/Hermes bukan APK. Frontend masih iterasi 1; editor budget,
-detail/edit/hapus transaksi, beberapa filter, onboarding dan reminder lokal belum lengkap.
+detail/edit/hapus transaksi, beberapa filter dan onboarding belum lengkap. Reminder lokal memerlukan uji Android fisik.
 Tidak ada deployment otomatis.
 
 ## Menjalankan dan menguji
@@ -63,7 +65,7 @@ Dari root repository, gunakan Python environment backend untuk menjalankan suite
 python scripts/test_backend_contract.py backend
 ```
 
-Runner memulai fixture loopback baru, menjalankan lima tes, lalu menghentikannya.
+Runner memulai fixture loopback baru, menjalankan tujuh tes, lalu menghentikannya.
 Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nyata.
 `npm test` biasa melewati lima tes HTTP kecuali env opt-in disediakan.
 
@@ -73,6 +75,7 @@ Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nya
 - [Kontrak API dan data](docs/02_API_DAN_DATA.md)
 - [OpenAPI](docs/openapi.json)
 - [Hasil dan batas pengujian integrasi](docs/INTEGRATION.md)
+- [Reminder Android dan matriks pengujian perangkat](docs/REMINDER_ANDROID.md)
 - [Handoff backend](docs/HANDOFF_BACKEND.md)
 
 Simpan `.env`, service-account key dan keystore di luar Git. Backend hanya menerima

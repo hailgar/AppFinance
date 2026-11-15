@@ -31,7 +31,7 @@ Iterasi berikutnya mengikuti urutan prompt setelah alur nyata diverifikasi:
 1. Editor budget default/override dari kartu Beranda, termasuk revision/tombstone.
 2. Detail, edit/hapus dengan konfirmasi dan pemulihan konflik revision; filter jenis/kategori riwayat; rincian ringkasan per kategori.
 3. Onboarding budget/reminder.
-4. Reminder lokal: permission, channel, dua jadwal, rekonsiliasi startup/resume, backup preferences/revision, pembatalan saat logout. Saat ini aplikasi **tidak menjadwalkan notifikasi**.
+4. Reminder lokal sudah diimplementasikan; rebuild development client/APK dan uji pengiriman nyata. Ikuti [handoff reminder](REMINDER_ANDROID.md) untuk izin, dua jadwal, offline, logout dan matriks uji perangkat.
 5. Uji Android fisik: TalkBack, teks besar, layar 360–430 dp, nominal 12 digit, keyboard, background, reboot, timezone, izin ditolak, offline, logout; build APK.
 
 Riwayat/ringkasan awal sudah membaca endpoint nyata; fitur yang belum ada tidak digantikan data palsu.

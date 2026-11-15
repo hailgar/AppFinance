@@ -12,6 +12,10 @@ const config: ExpoConfig = {
     googleServicesFile:
       process.env.GOOGLE_SERVICES_FILE || "./google-services.json",
     allowBackup: false,
+    blockedPermissions: [
+      "android.permission.SCHEDULE_EXACT_ALARM",
+      "android.permission.USE_EXACT_ALARM",
+    ],
   },
   plugins: [
     "expo-router",
@@ -19,6 +23,8 @@ const config: ExpoConfig = {
     "@react-native-firebase/auth",
     "@react-native-google-signin/google-signin",
     "expo-secure-store",
+    "expo-notifications",
+    "@react-native-community/datetimepicker",
   ],
 };
 export default config;

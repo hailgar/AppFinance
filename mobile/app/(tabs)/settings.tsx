@@ -1,3 +1,4 @@
+import { ReminderSettings } from "../../src/reminders/SettingsCard";
 import { Alert } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +18,7 @@ export default function Settings() {
         <Label muted>Mata uang rupiah · pembukuan WIB</Label>
         <Label muted>Jam pengingat mengikuti jam lokal perangkat.</Label>
       </Card>
+      <ReminderSettings controller={s.reminders} />
       <Button
         title="Keluar dari akun"
         secondary

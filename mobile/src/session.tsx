@@ -7,6 +7,12 @@ import {
   type ReactNode,
 } from "react";
 import { AppState, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import {
+  createReminders,
+  clearOrphanReminders,
+  listenForReminderTap,
+} from "./reminders/native";
 import NetInfo from "@react-native-community/netinfo";
 import {
   QueryClient,
@@ -40,7 +46,13 @@ function createSession(uid: string) {
     tokenSource,
   );
   const vault = vaultFor(uid);
-  return { uid, api, vault, commands: new CommandRunner(vault, api) };
+  return {
+    uid,
+    api,
+    vault,
+    reminders: createReminders(uid, api),
+    commands: new CommandRunner(vault, api),
+  };
 }
 export const useSession = () => {
   const s = useContext(Context);
@@ -54,6 +66,7 @@ function Gate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false),
     [pending, setPending] = useState(false);
   const qc = useQueryClient();
+  const router = useRouter();
   useEffect(
     () =>
       observeSession((user) => {
@@ -69,6 +82,38 @@ function Gate({ children }: { children: ReactNode }) {
       uid && process.env.EXPO_PUBLIC_API_BASE_URL ? createSession(uid) : null,
     [uid],
   );
+  useEffect(() => {
+    if (!session) {
+      if (uid === null) void clearOrphanReminders().catch(() => undefined);
+      return;
+    }
+    const reminders = session.reminders;
+    let active = true;
+    const refresh = async () => {
+      await reminders.refresh();
+      if (active && onlineManager.isOnline()) await reminders.sync();
+    };
+    void reminders.start().then(() => {
+      if (active) void refresh();
+    });
+    const app = AppState.addEventListener("change", (state) => {
+      if (state === "active") void refresh();
+    });
+    const network = NetInfo.addEventListener((state) => {
+      if (state.isConnected && state.isInternetReachable !== false)
+        void refresh();
+    });
+    return () => {
+      active = false;
+      app.remove();
+      network();
+      void reminders.stop().catch(() => undefined);
+    };
+  }, [session, uid]);
+  useEffect(() => {
+    if (!session || !ready || pending) return;
+    return listenForReminderTap(session.uid, (route) => router.push(route));
+  }, [session, ready, pending, router]);
   useEffect(() => {
     let active = true;
     if (session)
@@ -204,9 +249,7 @@ function Gate({ children }: { children: ReactNode }) {
                   onPress: () =>
                     void (async () => {
                       try {
-                        await session.vault.clear();
-                        qc.clear();
-                        await logout();
+                        await signOutAndClear(session, qc);
                       } catch {
                         setError("Belum bisa keluar. Coba lagi.");
                       }
@@ -231,8 +274,15 @@ export async function signOutAndClear(
   session: ReturnType<typeof useSession>,
   qc: QueryClient,
 ) {
-  await session.vault.clear();
-  qc.clear();
-  await logout();
+  try {
+    await session.reminders.stop();
+    await session.vault.clear();
+    qc.clear();
+    await logout();
+  } catch (error) {
+    // If logout failed, the signed-in account still owns its local preferences.
+    if (auth.currentUser?.uid === session.uid) await session.reminders.start();
+    throw error;
+  }
 }
 export const currentUserName = () => auth.currentUser?.displayName || "Kamu";

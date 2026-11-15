@@ -14,7 +14,7 @@
 | FastAPI dan Google Sheets | Belum diuji; URL backend, allowlist UID, dan OpenAPI live belum tersedia |
 | Build APK development/release | Belum dilakukan; Android SDK/adb/perangkat tidak tersedia |
 | Layout 360–430 dp, TalkBack, teks besar | Belum diverifikasi visual/native |
-| Reminder background/reboot/timezone/logout | Belum diimplementasikan pada iterasi ini |
+| Reminder background/reboot/timezone/logout | Kode ditambahkan pada iterasi reminder; unit/HTTP lulus, perangkat fisik belum diuji. Lihat REMINDER_ANDROID.md |
 
 Tes domain: pemisahan tampilan/payload rupiah, penolakan input invalid/desimal/negatif/nominal berlebih, budget null/Rp0/kelebihan, batas hari WIB dan validasi tanggal kalender/rentang.
 
@@ -27,3 +27,9 @@ Tidak ada klaim bahwa simpan telah terbukti persisten setelah reload ke server/S
 ## Pembaruan pemeriksaan integrasi
 
 Lihat `INTEGRATION.md` untuk hasil terkini. Kategori FE kini memakai `data.items` dan telah diuji lewat HTTP ke FastAPI dengan auth/storage khusus tes. Firebase/Sheets nyata, reminder, dan APK belum diverifikasi.
+
+## Iterasi 04 — Reminder Android
+
+Hasil terbaru khusus reminder: [REMINDER_ANDROID.md](REMINDER_ANDROID.md).
+52 unit FE dan 7 tes HTTP lulus; ekspor Android bukan APK dan tidak membuktikan
+notifikasi diterima di perangkat. Hasil iterasi 1 di atas dipertahankan sebagai catatan historis.

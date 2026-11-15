@@ -27,3 +27,15 @@
 ## Pembaruan pemeriksaan integrasi
 
 Lihat `INTEGRATION.md` untuk hasil terkini. Kategori FE kini memakai `data.items` dan telah diuji lewat HTTP ke FastAPI dengan auth/storage khusus tes. Firebase/Sheets nyata, reminder, dan APK belum diverifikasi.
+
+## Iterasi 04 — Reminder Android
+
+- Reminder lokal mengikuti PRD; tidak ada cron BE/remote push/exact-alarm permission.
+- Dua pengaturan, ID jadwal dan outbox preferensi disimpan di SecureStore per UID,
+  terpisah dari command transaksi; server memakai endpoint preferences yang sudah ada.
+- Penolakan izin diarahkan ke pengaturan Android; status kanal juga dibaca.
+- UNKNOWN preference write dipulihkan melalui receipt; resend hanya aksi eksplisit
+  dengan key/body sama. Perubahan lokal baru tetap dipertahankan saat receipt lama tiba.
+- Konflik server membutuhkan pilihan perangkat/server. Login/resume merekonsiliasi
+  jadwal nyata; kedua jalur logout membatalkan reminder akun.
+- Lihat REMINDER_ANDROID.md untuk hasil aktual dan penerimaan Android yang masih terbuka.

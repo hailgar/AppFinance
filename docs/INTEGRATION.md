@@ -12,7 +12,7 @@ Tipe monthly summary dan operation disamakan dengan OpenAPI BE, tanpa mengubah w
 Source digabungkan dalam repository hailgar/AppFinance: mobile/, backend/, docs/, scripts/.
 Jalankan perintah dari root repository ini kecuali disebutkan lain.
 Jangan mengunggah node_modules, .env, private key, keystore, data runtime, atau dist.
-Workflow .github/workflows/frontend.yml dan backend.yml memeriksa FE dan BE sesudah push/PR; integration.yml menjalankan lima tes kontrak HTTP.
+Workflow .github/workflows/frontend.yml dan backend.yml memeriksa FE dan BE sesudah push/PR; integration.yml menjalankan tujuh tes kontrak HTTP.
 Workflow belum dijalankan di GitHub. Tidak ada deployment otomatis atau build cloud berbayar.
 
 ## Pemeriksaan aktual
@@ -33,7 +33,7 @@ Workflow belum dijalankan di GitHub. Tidak ada deployment otomatis atau build cl
 Backend dipasang ulang ke virtual environment terpisah memakai requirements.lock tanpa perubahan versi.
 52 tes BE dan lima tes HTTP kembali lulus pada dependency terkunci tersebut.
 
-Lima tes HTTP mencakup:
+Lima tes HTTP awal mencakup:
 1. Kategori pengeluaran/pemasukan dari data.items dapat dipakai sebagai array oleh FE.
 2. Budget 100000, pengeluaran 35000, pemasukan 200000 menghasilkan sisa 65000;
    retry key/body sama menghasilkan satu transaksi efektif; riwayat/ringkasan sesuai.
@@ -96,9 +96,17 @@ replay restart, concurrent requests dan late append; tes HTTP ini tidak menguji 
 - URL BE HTTPS yang terjangkau HP; EXPO_PUBLIC_API_BASE_URL menyertakan /api/v1.
 - Implementasi FE budget editor, edit/hapus/detail, filter dan onboarding yang masih
   tercatat sebagai gap iterasi 1. Pengaturan budget pada tes lewat API bukan bukti editor FE selesai.
-- Reminder lokal belum diimplementasikan pada ZIP FE. Izin, penjadwalan, rekonsiliasi,
-  pembatalan logout/reboot perlu dikerjakan dan diuji pada Android nyata.
+- Reminder lokal kini diimplementasikan; izin, penjadwalan, rekonsiliasi dan logout
+  diuji pada controller/adapter, tetapi pengiriman/reboot memerlukan Android nyata.
+  Lihat [handoff reminder](REMINDER_ANDROID.md).
 - Build development/preview, uji login native, ukuran teks, TalkBack, koneksi putus,
   dan notifikasi pada HP fisik. Profil EAS sudah ada, belum dijalankan.
 
 Kode diperiksa pada Linux; perintah Windows/Mac terdokumentasi tetapi belum dieksekusi di perangkat itu.
+
+## Pembaruan reminder Android
+
+Dua tes HTTP preferensi ditambahkan dan lulus: recovery PUT sesudah respons hilang
+dan konflik revision saat pengaturan offline bertemu perubahan server. Total suite
+HTTP sekarang 7 tes. Tabel awal di atas merekam pemeriksaan integrasi sebelum
+iterasi reminder; hasil FE terbaru 52 unit lulus, typecheck/lint dan ekspor Android lulus.

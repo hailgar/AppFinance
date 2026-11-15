@@ -3,6 +3,14 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Dashboard, Monthly, Page, Transaction } from "../domain";
 import { createApi } from "../services/api";
 import { CommandRunner, type Command, type Vault } from "../services/commands";
+import { ReminderController } from "../reminders/controller";
+import {
+  defaults,
+  type Device,
+  type Preferences,
+  type Storage,
+  type Stored,
+} from "../reminders/model";
 import { getCategories } from "../services/resources";
 
 // Explicit opt-in: this suite sends writes to a disposable loopback test fixture.
@@ -35,6 +43,31 @@ const expense = (amount = 35000) => ({
   transaction_date: date,
   note: null,
 });
+
+function reminderPorts() {
+  let value: Stored | null = null;
+  const storage: Storage = {
+    load: async () => structuredClone(value),
+    save: async (next) => {
+      value = structuredClone(next);
+    },
+  };
+  const device: Device = {
+    prepare: async () => {},
+    permission: async () => ({
+      granted: false,
+      canAskAgain: false,
+      channelEnabled: true,
+    }),
+    list: async () => [],
+    schedule: async () => "unused",
+    cancel: async () => {},
+    dismiss: async () => {},
+    test: async () => {},
+    zone: () => "Asia/Jakarta",
+  };
+  return { storage, device };
+}
 
 describe.skipIf(!base)("mobile client ↔ FastAPI HTTP contract", () => {
   beforeAll(() => {
@@ -166,5 +199,89 @@ describe.skipIf(!base)("mobile client ↔ FastAPI HTTP contract", () => {
     expect(
       (await api<Transaction>("/transactions/" + original.id)).data.amount,
     ).toBe(1500);
+  });
+  it("recovers reminder PUT through a real operation receipt after a lost response and restart", async () => {
+    let puts = 0;
+    const client = createApi(base!, { token }, async (url, init) => {
+      const result = await fetch(url, init);
+      if (init?.method === "PUT") {
+        puts++;
+        throw Error("lost preference response after commit");
+      }
+      return result;
+    });
+    const { storage, device } = reminderPorts();
+    const controller = new ReminderController(
+      "owner",
+      storage,
+      device,
+      client,
+      randomUUID,
+    );
+    await controller.start();
+    await controller.sync();
+    expect(controller.getSnapshot().preferences).toEqual(defaults());
+    await controller.change("record_reminder", {
+      enabled: true,
+      time: "21:45",
+    });
+    await controller.sync();
+    expect(controller.getSnapshot().backup).toBe("uncertain");
+    const restarted = new ReminderController(
+      "owner",
+      storage,
+      device,
+      client,
+      randomUUID,
+    );
+    await restarted.start();
+    await restarted.sync();
+    expect(restarted.getSnapshot().backup).toBe("saved");
+    expect(restarted.getSnapshot().preferences.record_reminder).toEqual({
+      enabled: true,
+      time: "21:45",
+    });
+    expect((await api<Preferences>("/preferences")).data.revision).toBe(1);
+    expect(puts).toBe(1);
+  });
+
+  it("requires review of newer server preferences before overwriting offline reminder changes", async () => {
+    const { storage, device } = reminderPorts();
+    const controller = new ReminderController(
+      "owner",
+      storage,
+      device,
+      api,
+      randomUUID,
+    );
+    await controller.start();
+    await controller.sync();
+    await controller.change("budget_reminder", {
+      enabled: true,
+      time: "07:30",
+    });
+    const remote = (await api<Preferences>("/preferences")).data;
+    const { revision, ...settings } = remote;
+    await api("/preferences", {
+      method: "PUT",
+      headers: { "Idempotency-Key": randomUUID() },
+      body: JSON.stringify({
+        ...settings,
+        expected_revision: revision,
+        record_reminder: { enabled: false, time: "20:30" },
+      }),
+    });
+    await controller.sync();
+    expect(controller.getSnapshot().backup).toBe("conflict");
+    expect(controller.getSnapshot().preferences.budget_reminder.enabled).toBe(
+      true,
+    );
+    await controller.resolve(false);
+    expect(controller.getSnapshot().preferences.record_reminder.time).toBe(
+      "20:30",
+    );
+    expect(controller.getSnapshot().preferences.budget_reminder.enabled).toBe(
+      false,
+    );
   });
 });
