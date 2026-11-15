@@ -57,6 +57,11 @@ export default function Today() {
             budget={q.data.budget_amount}
             expense={q.data.expense_total}
           />
+          <Button
+            title="Atur budget"
+            secondary
+            onPress={() => router.push("/budget")}
+          />
           <Card>
             <Label>Pemasukan hari ini</Label>
             <Label>{rupiah(q.data.income_total)}</Label>

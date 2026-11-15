@@ -46,3 +46,61 @@ describe("Firebase token lifecycle", () => {
     expect(token).toHaveBeenCalledTimes(1);
   });
 });
+
+it("aborts a response body that never completes even after headers arrived", async () => {
+  vi.useFakeTimers();
+  try {
+    const send: typeof fetch = async (_url, init) =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            init?.signal?.addEventListener("abort", () =>
+              controller.error(
+                new DOMException("Body timed out", "AbortError"),
+              ),
+            );
+          },
+        }),
+        { status: 200 },
+      );
+    const promise = createApi(
+      "https://example.test/api/v1",
+      { token: async () => "valid" },
+      send,
+    )("/dashboard");
+    const assertion = expect(promise).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    await vi.advanceTimersByTimeAsync(15000);
+    await assertion;
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("times out a stalled Firebase token refresh and never sends after it eventually resolves", async () => {
+  vi.useFakeTimers();
+  try {
+    let finishToken!: (value: string) => void;
+    const token = new Promise<string>((resolve) => {
+      finishToken = resolve;
+    });
+    const transport = vi.fn().mockResolvedValue(response(201));
+    const request = createApi(
+      "https://example.test/api/v1",
+      { token: () => token },
+      transport,
+    )("/transactions", { method: "POST", body: '{"amount":35000}' });
+    const assertion = expect(request).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    await vi.advanceTimersByTimeAsync(15000);
+    await assertion;
+    expect(transport).not.toHaveBeenCalled();
+    finishToken("eventually-refreshed");
+    await vi.runAllTimersAsync();
+    expect(transport).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});

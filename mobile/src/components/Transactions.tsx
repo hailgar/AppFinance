@@ -1,6 +1,6 @@
-import { View } from "react-native";
+import { router } from "expo-router";
 import { type Transaction, rupiah } from "../domain";
-import { Card, Label } from "./ui";
+import { Button, Card, Label } from "./ui";
 const labels: Record<string, string> = {
   EXP_FOOD: "Makan & Minum",
   EXP_TRANSPORT: "Transportasi",
@@ -19,7 +19,7 @@ export function Transactions({ items }: { items: Transaction[] }) {
         <Label muted>Belum ada transaksi pada rentang ini.</Label>
       ) : (
         items.map((item) => (
-          <View key={item.id} style={{ gap: 4, paddingVertical: 8 }}>
+          <Card key={item.id}>
             <Label>{labels[item.category_code] || "Transaksi"}</Label>
             <Label>
               {item.type === "EXPENSE" ? "Keluar" : "Masuk"} ·{" "}
@@ -29,7 +29,17 @@ export function Transactions({ items }: { items: Transaction[] }) {
               {item.transaction_date}
               {item.note ? ` · ${item.note}` : ""}
             </Label>
-          </View>
+            <Button
+              title="Lihat detail"
+              secondary
+              onPress={() =>
+                router.push({
+                  pathname: "/transaction-detail",
+                  params: { id: item.id },
+                })
+              }
+            />
+          </Card>
         ))
       )}
     </Card>
