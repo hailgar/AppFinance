@@ -56,10 +56,12 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
   Google Cloud IAM menampilkan Site Unavailable pada browser sesi ini.
 - Azure Portal meminta login Microsoft; metode GitHub dipilih melalui formulir aman.
   Pengguna mengizinkan consent Microsoft-Corporation. Halaman sudah melewati
-  otorisasi GitHub; kode email Microsoft diterima melalui formulir aman. Kini
-  tampil pembaruan Microsoft Services Agreement. Automatic approval review menolak
-  tombol Next karena dapat menerima ketentuan mengikat; menunggu persetujuan khusus
-  untuk pembaruan perjanjian tersebut. Tidak ada kode/token login dicatat di source.
+  otorisasi GitHub; kode email Microsoft diterima melalui formulir aman. Pengguna
+  juga mengizinkan Next pada pembaruan ketentuan. Halaman berikutnya menolak kode,
+  kemudian menampilkan Your session has timed out. Portal baru diperiksa sekali
+  dan kembali meminta login; tidak ada sesi Azure terautentikasi yang terverifikasi.
+  Percobaan pada flow lama dihentikan. Persetujuan ketentuan tidak diasumsikan
+  berhasil hanya dari izin pengguna. Tidak ada kode/token login dicatat di source.
   Belum ada subscription, region F1,
   ARM what-if, resource atau deployment yang terverifikasi. Template F1 disiapkan
   sebagai hosting pengujian gratis; tanpa SLA/Always On dan memiliki kuota.
@@ -71,8 +73,9 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 
 ## Langkah berikutnya dan hambatan minimum
 
-1. Konfirmasi tombol Next pada pembaruan Microsoft Services Agreement agar login
-   Azure dapat dilanjutkan, lalu verifikasi subscription/F1 tersedia.
+1. Selesaikan akses Azure melalui sesi baru/metode yang dipilih pengguna, atau
+   Azure CLI lokal dengan device code sesuai deploy/azure/README.md; login lokal
+   tidak memberi akses ke browser/workspace ini. Verifikasi subscription/F1 dahulu.
    Hentikan jika harus memakai tier berbayar; jangan membeli resource otomatis.
 2. Selesaikan akses Google Cloud IAM: identitas backend khusus, Sheets API, izin
    verifikasi revocation Firebase dan Editor hanya pada spreadsheet yang dipakai.

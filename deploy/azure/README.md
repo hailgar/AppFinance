@@ -30,6 +30,29 @@ Tab wajib: LedgerEvents, TransactionsView, BudgetsView, PreferencesView, Metadat
 Panduan adalah tab tambahan untuk pemilik; backend mengabaikannya. Jangan menambah
 data contoh ke database pribadi atau mengubah header yang dibaca backend.
 
+## Jika login browser kedaluwarsa
+
+Jika Microsoft menampilkan session has timed out, hentikan flow/kode lama.
+Di sesi ini satu portal baru juga kembali meminta login; belum ada bukti Azure login
+berhasil. Tidak menganggap timeout sebagai blok bot atau kesalahan kode aplikasi.
+
+Alternatif resmi untuk komputer pengguna yang sudah memasang Azure CLI:
+
+```bash
+az login --use-device-code
+az account show --query '{name:name,state:state}' --output json
+```
+
+Ikuti alamat dan kode yang ditampilkan oleh Azure CLI milik sendiri, kemudian
+selesaikan verifikasi Microsoft di browser. Jalur ini alternatif autentikasi,
+bukan jaminan memperbaiki masalah akun; subscription aktif tetap diperlukan.
+Login tersebut hanya mengotorisasi CLI pada komputer yang menjalankannya, bukan
+browser/cloud workspace koordinator. Deployment kemudian dapat dijalankan dari
+checkout repository pada komputer tersebut dengan langkah di bawah. Jangan
+menyalin token, kode login, cache autentikasi atau password ke chat/source.
+
+Referensi: https://learn.microsoft.com/en-us/cli/azure/authenticate-azure-cli-interactively
+
 ## Provisioning dan deploy setelah akun tersedia
 
 Gunakan Azure CLI resmi dengan login akun pengguna. Parameter rahasia disimpan
