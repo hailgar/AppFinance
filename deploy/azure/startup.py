@@ -24,8 +24,13 @@ def prepare_credentials(env=os.environ):
         raise RuntimeError("Invalid backend service-account configuration.") from None
     if value["project_id"] != env.get("FIREBASE_PROJECT_ID"):
         raise RuntimeError("Backend service account and Firebase project must match.")
-    checkpoint = Path(env.get("LEDGER_CHECKPOINT_PATH", "")).resolve()
-    if not checkpoint.is_absolute() or not checkpoint.is_relative_to("/home/catat-data"):
+    raw_checkpoint = env.get("LEDGER_CHECKPOINT_PATH", "")
+    if not raw_checkpoint or not Path(raw_checkpoint).is_absolute():
+        raise RuntimeError("Azure checkpoint must be an absolute file path under /home/catat-data.")
+    checkpoint = Path(raw_checkpoint).resolve()
+    if (checkpoint == Path("/home/catat-data") or
+            not checkpoint.is_relative_to("/home/catat-data") or
+            (checkpoint.exists() and not checkpoint.is_file())):
         raise RuntimeError("Azure checkpoint must be under /home/catat-data.")
     descriptor, name = tempfile.mkstemp(prefix="catat-google-", suffix=".json")
     try:

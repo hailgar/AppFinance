@@ -54,7 +54,7 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
               output.write('Signing SHA-1: `' + sha1 + '`\n\nSigning SHA-256: `' + sha256 + '`\n')
           PY
-          python scripts/android_config.py
+          python scripts/android_config.py --check-backend
       - run: npm ci
         working-directory: mobile
       - run: npx expo prebuild --platform android --no-install

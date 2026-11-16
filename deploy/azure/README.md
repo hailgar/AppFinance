@@ -8,6 +8,8 @@ Jangan menggantinya otomatis dengan Basic, trial kredit atau layanan berbayar.
 
 Template hanya membuat App Service Plan **F1** dan satu web app Linux. Tidak membuat
 database, Key Vault, Application Insights, registry, VM atau domain berbayar.
+Nama web app dibatasi 55 karakter agar tambahan `-free` pada nama plan tetap
+memenuhi batas 60 karakter Azure App Service Plan.
 Gunakan HTTPS bawaan `azurewebsites.net`, bukan domain sendiri. Akun Azure dengan
 subscription aktif tetap diperlukan; verifikasi akun dapat meminta metode pembayaran.
 Jangan mengaktifkan upgrade berbayar tanpa keputusan pengguna.
@@ -56,6 +58,9 @@ ketersediaan. Tidak membeli domain atau fallback ke SKU lain. Azure memerlukan
 dependency install dari requirements.lock melalui requirements.txt dalam ZIP.
 Startup memakai Python 3.12, satu uvicorn worker, checkpoint di `/home/catat-data/`.
 Credential dibuat sebagai file sementara mode 0600 dari App Settings saat startup.
+Path checkpoint harus absolut dan menunjuk file di bawah direktori tersebut,
+bukan direktori itu sendiri. Packager menolak menimpa file output yang sudah ada;
+gunakan nama ZIP baru atau hapus hanya artifact lama yang memang ingin diganti.
 
 Periksa health `/api/v1/health/live`, lalu uji login, tambah/edit/hapus dan reload
 menggunakan Firebase serta Sheet pengujian nyata. Restart web app dan verifikasi
@@ -84,6 +89,7 @@ berhasil sebelum Gradle menghasilkan file dan instalasinya terverifikasi.
 - https://azure.microsoft.com/en-us/pricing/details/app-service/linux/
 - https://learn.microsoft.com/en-us/azure/app-service/configure-language-python
 - https://learn.microsoft.com/en-us/azure/app-service/quickstart-python
+- https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
 - https://firebase.google.com/pricing
 - https://docs.github.com/en/actions/reference/runners/github-hosted-runners
 

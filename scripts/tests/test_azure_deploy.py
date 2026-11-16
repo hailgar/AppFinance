@@ -51,7 +51,8 @@ class AzureSetupTests(unittest.TestCase):
             startup.prepare_credentials(env)
 
     def test_checkpoint_requires_durable_home_path(self):
-        for path in ("", "data/checkpoint.json", "/tmp/checkpoint.json", "/home/catat-data/../../tmp/key"):
+        for path in ("", "data/checkpoint.json", "/tmp/checkpoint.json", "/home/catat-data",
+                     "/home/catat-data/../../tmp/key"):
             env = self.environment()
             env["LEDGER_CHECKPOINT_PATH"] = path
             with self.subTest(path=path), self.assertRaises(RuntimeError):
@@ -76,11 +77,53 @@ class AzureSetupTests(unittest.TestCase):
                 self.assertEqual(bundle.read("requirements.txt"), b"-r requirements.lock\n")
                 self.assertNotIn(b"PRIVATE_TEST_SENTINEL", b"".join(bundle.read(n) for n in bundle.namelist()))
 
+    def fixture_package(self, root):
+        for folder in ("backend/app", "backend/scripts", "deploy/azure"):
+            (root / folder).mkdir(parents=True)
+        for name in ("backend/app/main.py", "backend/scripts/admin.py", "deploy/azure/startup.py"):
+            (root / name).write_text("# source\n")
+        (root / "backend/requirements.lock").write_text("uvicorn==0.52.1\n")
+
+    def test_packaging_cannot_overwrite_existing_output_or_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture_package(root)
+            for destination in (root / "result.zip", root / "backend/app/main.py"):
+                destination.write_bytes(b"KEEP_EXISTING_CONTENT")
+                with self.subTest(destination=destination.name), self.assertRaises(FileExistsError):
+                    packaging.package_backend(root, destination)
+                self.assertEqual(destination.read_bytes(), b"KEEP_EXISTING_CONTENT")
+
+    def test_packaging_rejects_symlinked_requirements_and_source_folder(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture_package(root)
+            outside = root / "private-lock"
+            outside.write_text("PRIVATE_TEST_SENTINEL")
+            lock = root / "backend/requirements.lock"
+            lock.unlink()
+            lock.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "regular source"):
+                packaging.package_backend(root, root / "result.zip")
+            self.assertFalse((root / "result.zip").exists())
+            lock.unlink()
+            lock.write_text("uvicorn==0.52.1\n")
+            (root / "backend/app/main.py").unlink()
+            (root / "backend/app").rmdir()
+            target = root / "external-app"
+            target.mkdir()
+            (target / "private.py").write_text("PRIVATE_TEST_SENTINEL")
+            (root / "backend/app").symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "directories must not be symlinks"):
+                packaging.package_backend(root, root / "result.zip")
+            self.assertFalse((root / "result.zip").exists())
+
     def test_template_contains_only_free_plan_and_no_secret_output(self):
         template = json.loads((ROOT / "deploy/azure/main.json").read_text())
         self.assertEqual([r["type"] for r in template["resources"]],
                          ["Microsoft.Web/serverfarms", "Microsoft.Web/sites"])
         self.assertEqual(template["resources"][0]["sku"]["name"], "F1")
+        self.assertLessEqual(template["parameters"]["appName"]["maxLength"] + len("-free"), 60)
         for key in ("allowedFirebaseUid", "spreadsheetId", "googleServiceAccountJson"):
             self.assertEqual(template["parameters"][key]["type"], "securestring")
         self.assertEqual(list(template["outputs"]), ["appName"])
