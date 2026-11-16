@@ -59,14 +59,17 @@ tidak ada agent paralel baru yang dibutuhkan untuk perubahan ini.
   credential hilang/di dalam repository, check tidak mengklaim akses Google. Python
   compile/help dan git diff --check lulus. Ini belum bukti runtime Windows/native.
 - Job Windows ditambahkan untuk preflight dan tes lease/checkpoint/startup dengan
-  upstream terkontrol. Hasil remote dicatat setelah commit/push; bukan tes Google nyata.
+  upstream terkontrol. Commit `a4d0b6335dc556d60dd0140b73d21ce0e8113440` sudah di-push;
+  [CI Backend](https://github.com/hailgar/AppFinance/actions/runs/43888132843) selesai
+  success untuk job Ubuntu backend dan Windows local (job `133371709953`). Ini bukti
+  dependency/test helper dan lease di runner Windows, bukan startup Google/HP nyata.
 - Dependensi yang masih memblokir: Python/tools di laptop pengguna, credential Google
   lokal di luar repository, UID Firebase dan konfigurasi/signing Android aktual.
 - Backend nyata, tunnel aktual, APK, transaksi Sheet test dan HP fisik belum dijalankan.
   Langkah berikutnya: pengguna menjalankan `py -3.12 --version` dan setup lokal; lengkapi
   Firebase, bootstrap Sheet test, jalankan API, lalu lanjutkan build Android dan uji HP.
-- Commit terkait: perubahan runner/panduan/CI pada branch `feat/complete-mvp-integration`
-  (SHA hasil push dicatat pada laporan koordinator).
+- Commit terkait: `a4d0b63` (runner/panduan/CI), PR #2 tetap draft pada branch
+  `feat/complete-mvp-integration`.
 
 ## Kondisi Google, hosting dan perangkat yang diamati
 
