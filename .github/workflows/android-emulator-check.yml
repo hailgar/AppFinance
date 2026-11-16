@@ -1,0 +1,45 @@
+name: Android emulator environment (no app acceptance)
+on:
+  push:
+    paths:
+      - '.github/workflows/android-emulator-check.yml'
+      - 'scripts/android_emulator_smoke.py'
+      - 'scripts/tests/test_android_emulator_smoke.py'
+  pull_request:
+    paths:
+      - '.github/workflows/android-emulator-check.yml'
+      - 'scripts/android_emulator_smoke.py'
+      - 'scripts/tests/test_android_emulator_smoke.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-emulator-environment-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  emulator:
+    # Standard public-repository runner; no paid larger runner or cloud device farm.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify and enable KVM for this ephemeral runner user
+        shell: bash
+        run: |
+          test -c /dev/kvm
+          sudo chown "$(id -u):$(id -g)" /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
+      - name: Boot free Android emulator and verify environment
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # reviewed v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 2048M
+          disable-linux-hw-accel: false
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader -no-snapshot -noaudio -no-boot-anim -camera-back none -accel on
+          script: python3 scripts/android_emulator_smoke.py

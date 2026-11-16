@@ -102,3 +102,83 @@ export type Monthly = {
     amount: number;
   }[];
 };
+
+export type BudgetDefault = {
+  effective_from: string;
+  amount: number;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+};
+export type EffectiveBudget = {
+  amount: number | null;
+  source: "DEFAULT" | "OVERRIDE" | "UNSET";
+  effective_from: string | null;
+  override_active: boolean;
+  override_revision: number;
+};
+export function validBudgetDate(
+  value: string,
+  mode: "DEFAULT" | "OVERRIDE",
+  today = businessDate(),
+): boolean {
+  if (!validCalendarDate(value)) return false;
+  const days =
+    (Date.parse(value + "T00:00:00Z") - Date.parse(today + "T00:00:00Z")) /
+    86400000;
+  return days <= 366 && days >= (mode === "DEFAULT" ? 0 : -366);
+}
+export function defaultRevision(
+  defaults: BudgetDefault[],
+  date: string,
+): number {
+  return defaults.find((item) => item.effective_from === date)?.revision ?? 0;
+}
+export function historyQuery(
+  filters: {
+    from: string;
+    to: string;
+    type?: TransactionType;
+    category_code?: string;
+  },
+  cursor?: string | null,
+): string {
+  return (
+    "/transactions?" +
+    new URLSearchParams({
+      from: filters.from,
+      to: filters.to,
+      limit: "20",
+      ...(filters.type ? { type: filters.type } : {}),
+      ...(filters.category_code
+        ? { category_code: filters.category_code }
+        : {}),
+      ...(cursor ? { cursor } : {}),
+    }).toString()
+  );
+}
+
+export function validHistoryRange(
+  from: string,
+  to: string,
+  today = businessDate(),
+): boolean {
+  return (
+    validTransactionDate(from, today) &&
+    validTransactionDate(to, today) &&
+    to >= from &&
+    (Date.parse(to + "T00:00:00Z") - Date.parse(from + "T00:00:00Z")) /
+      86400000 <=
+      365
+  );
+}
+export function validSummaryMonth(
+  month: string,
+  today = businessDate(),
+): boolean {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return false;
+  const oldest = new Date(Date.parse(today + "T00:00:00Z") - 366 * 86400000)
+    .toISOString()
+    .slice(0, 7);
+  return month >= oldest && month <= today.slice(0, 7);
+}

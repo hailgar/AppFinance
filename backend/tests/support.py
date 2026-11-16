@@ -13,6 +13,8 @@ class MemoryRepository:
     def __init__(self):
         self.rows = [HEADERS.copy()]
         self.after_append = None
+        self.views = {}
+        self.view_writes = 0
 
     def read_rows(self):
         return deepcopy(self.rows)
@@ -24,6 +26,10 @@ class MemoryRepository:
 
     def close(self):
         pass
+
+    def replace_views(self, tables):
+        self.views.update(deepcopy(tables))
+        self.view_writes += 1
 
 
 def service(repository=None):

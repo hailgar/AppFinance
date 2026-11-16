@@ -1,0 +1,14 @@
+// Applied only by the manual internal build workflow. Passwords stay in env.
+allprojects { target ->
+    target.plugins.withId('com.android.application') {
+        // Configure after the app DSL is evaluated but before AGP locks it.
+        target.extensions.getByName('androidComponents').finalizeDsl { android ->
+            def internal = android.signingConfigs.maybeCreate('internal')
+            internal.storeFile = new File(System.getenv('ANDROID_KEYSTORE_PATH'))
+            internal.storePassword = System.getenv('ANDROID_STORE_PASSWORD')
+            internal.keyAlias = System.getenv('ANDROID_KEY_ALIAS')
+            internal.keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+            android.buildTypes.configureEach { signingConfig = internal }
+        }
+    }
+}

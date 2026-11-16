@@ -15,7 +15,10 @@ export function createApi(
   transport: typeof fetch = fetch,
 ) {
   const root = base.replace(/\/$/, "");
-  if (!/^https:\/\//.test(root) && !(__DEV__ && /^http:\/\//.test(root)))
+  if (
+    !/^https:\/\//.test(root) &&
+    !(typeof __DEV__ !== "undefined" && __DEV__ && /^http:\/\//.test(root))
+  )
     throw Error("Gunakan URL HTTPS untuk backend.");
   return async function request<T>(
     path: string,
@@ -23,24 +26,50 @@ export function createApi(
   ): Promise<{ status: number; data: T }> {
     const send = async (force: boolean) => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      let timeout: ReturnType<typeof setTimeout>;
+      const expired = new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort();
+          const error = new Error("Request timed out");
+          error.name = "AbortError";
+          reject(error);
+        }, 15000);
+      });
       try {
-        return await transport(root + path, {
-          ...init,
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            ...init.headers,
-            Authorization: `Bearer ${await auth.token(force)}`,
-          },
-        });
+        return await Promise.race([
+          (async () => {
+            const token = await auth.token(force);
+            // Token acquisition is not abortable through fetch. If it resolves
+            // after the deadline, never start a request that the UI has abandoned.
+            if (controller.signal.aborted) {
+              const error = new Error("Request timed out");
+              error.name = "AbortError";
+              throw error;
+            }
+            const res = await transport(root + path, {
+              ...init,
+              signal: controller.signal,
+              headers: {
+                "Content-Type": "application/json",
+                ...init.headers,
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            const body = await res.json().catch((error: unknown) => {
+              if (controller.signal.aborted) throw error;
+              return null;
+            });
+            return { res, body };
+          })(),
+          expired,
+        ]);
       } finally {
-        clearTimeout(timeout);
+        clearTimeout(timeout!);
       }
     };
-    let res = await send(false);
-    if (res.status === 401) res = await send(true); // One SDK refresh only; same command body/key.
-    const body = await res.json().catch(() => null);
+    let response = await send(false);
+    if (response.res.status === 401) response = await send(true); // One SDK refresh only; same command body/key.
+    const { res, body } = response;
     if (!res.ok)
       throw new ApiError(res.status, body?.error?.code || "REQUEST_FAILED");
     if (!body || !("data" in body)) throw new ApiError(502, "INVALID_RESPONSE");
@@ -53,6 +82,8 @@ export function errorMessage(error: unknown): string {
       return "Sesi perlu diperbarui. Keluar lalu masuk kembali.";
     if (error.status === 403)
       return "Akun ini belum diizinkan mengakses aplikasi.";
+    if (error.status === 404)
+      return "Data sudah dihapus atau tidak tersedia. Muat ulang riwayat.";
     if (error.status === 409)
       return "Data berubah. Muat ulang dan tinjau sebelum mencoba lagi.";
     if (error.status === 422) return "Periksa kembali data yang diisi.";

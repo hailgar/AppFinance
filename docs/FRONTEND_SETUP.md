@@ -9,7 +9,7 @@ Google Sheets nyata, atau APK. Dokumen PRD, kontrak, dan OpenAPI BE disertakan d
 
 ## Status yang sebenarnya
 
-Kode menggunakan API nyata, tanpa adapter mock dan tanpa data keuangan contoh. Koneksi backend, login Google pada perangkat, persistensi Sheets, dan APK **belum diverifikasi**. Tidak ada backend, Firebase project, credential, Android SDK/perangkat, atau OpenAPI live yang disediakan pada sesi ini.
+Kode menggunakan API nyata, tanpa adapter mock dan tanpa data keuangan contoh. Koneksi backend, login Google pada perangkat, persistensi Sheets, dan APK **belum diverifikasi**. Firebase project Spark dan aplikasi Android kini terverifikasi di konsol; Google Sign-In Enabled. Belum ada pengguna Firebase, fingerprint signing, backend HTTPS, credential runtime atau Android SDK/perangkat yang bisa dipakai untuk penerimaan. Unduhan konfigurasi Android belum berhasil melalui browser sesi ini.
 
 PRD dan kontrak v0.1 dibaca sebelum implementasi: `01_PRD.md` dan `02_API_DAN_DATA.md` dari proyek. Dokumen sumber tidak diubah. Prompt yang diberikan disertakan dalam `docs/03_PROMPT_FE.md`.
 
@@ -24,17 +24,17 @@ PRD dan kontrak v0.1 dibaca sebelum implementasi: `01_PRD.md` dan `02_API_DAN_DA
 - Cache keuangan hanya di memori; satu command unresolved disimpan privat untuk recovery. Tidak ada antrean transaksi offline.
 - Riwayat rentang tanggal dan pagination cursor; ringkasan total bulanan; logout dengan peringatan jika operasi belum pasti.
 
-## Belum diimplementasikan
+## Status implementasi terbaru
 
-Iterasi berikutnya mengikuti urutan prompt setelah alur nyata diverifikasi:
+Budget default/override, detail/edit/hapus transaksi, filter jenis/kategori, rincian
+kategori bulanan, onboarding opsional dan reminder lokal kini diimplementasikan pada
+branch pekerjaan. Editor memakai expected_revision/tombstone dan stable operation ID.
+Logika reminder mencakup izin, dua jadwal, rekonsiliasi, preferensi offline/recovery,
+konflik server dan pembatalan logout; belum ada bukti pengiriman pada perangkat nyata.
 
-1. Editor budget default/override dari kartu Beranda, termasuk revision/tombstone.
-2. Detail, edit/hapus dengan konfirmasi dan pemulihan konflik revision; filter jenis/kategori riwayat; rincian ringkasan per kategori.
-3. Onboarding budget/reminder.
-4. Reminder lokal: permission, channel, dua jadwal, rekonsiliasi startup/resume, backup preferences/revision, pembatalan saat logout. Saat ini aplikasi **tidak menjadwalkan notifikasi**.
-5. Uji Android fisik: TalkBack, teks besar, layar 360–430 dp, nominal 12 digit, keyboard, background, reboot, timezone, izin ditolak, offline, logout; build APK.
-
-Riwayat/ringkasan awal sudah membaca endpoint nyata; fitur yang belum ada tidak digantikan data palsu.
+Tersisa untuk penerimaan: konfigurasi Firebase/Sheet/HTTPS/signing, Android SDK atau
+runner build yang dikonfigurasi, APK aktual, dan pengujian fisik. Lihat STATUS.md serta
+bagian build internal di bawah. Tidak ada mock yang dipakai untuk mengklaim Google nyata.
 
 ## Menjalankan di komputer pengembangan
 
@@ -66,12 +66,21 @@ npm start
 
 Untuk HP fisik, `localhost` menunjuk HP itu sendiri. Gunakan backend HTTPS yang bisa dijangkau HP. Saat memakai backend lokal, pilih IP LAN komputer pada Wi-Fi yang sama dan aturan firewall yang sesuai, atau gunakan USB `adb reverse tcp:8000 tcp:8000`. HTTP lokal hanya dapat dipakai bila build development dikonfigurasi mengizinkan cleartext secara spesifik; konfigurasi bawaan proyek ini tidak melonggarkan transport jaringan Android. Akses di luar development harus HTTPS. Backend lokal berhenti tersedia jika komputer/server mati.
 
+Untuk jalur laptop Windows yang dipilih pengguna, gunakan bagian **Jalur laptop Windows**
+dan **HTTPS dari HP** di [BACKEND_SETUP.md](BACKEND_SETUP.md). Backend berjalan pada
+loopback, lalu Quick Tunnel memberi URL HTTPS sementara. Gunakan URL aktual tunnel
+ditambah `/api/v1`; tidak ada perubahan yang mengizinkan cleartext di APK.
+URL Quick Tunnel berubah saat proses dibuat ulang. Restart Metro setelah mengubah
+`.env` untuk development client; APK preview yang mandiri harus dibangun ulang jika
+API URL tertanam berubah. Expo Go tetap tidak mendukung modul native aplikasi ini.
+
 ## Pemeriksaan
 
 ```bash
 npm run typecheck
 npm run lint
 npm test
+npm run check:native
 npm run check:expo
 npm run export:android
 ```
@@ -109,3 +118,102 @@ Tidak ada retry otomatis mutasi, logging token/catatan, akses langsung Google Sh
 - `mobile/src/services/`: API, autentikasi native, command recovery, secure vault.
 - `mobile/src/session.tsx`: sesi, cache memori, pemulihan dan logout.
 - `mobile/src/__tests__/`: tes aturan domain, 401/403, dan operasi belum pasti.
+
+## Pembaruan MVP dan build internal
+
+Implementasi kini mencakup editor budget default/override, detail/edit/hapus transaksi,
+filter riwayat jenis/kategori, rincian kategori bulanan, pengenalan opsional, dan reminder
+lokal. Lihat STATUS.md untuk bukti pemeriksaan dan gap native terbaru; catatan iterasi 1
+di atas merupakan riwayat awal dan bukan status implementasi terkini.
+
+Workflow manual `.github/workflows/android-internal.yml` menyediakan profil development
+(dev client, Metro diperlukan) dan preview (APK mandiri internal). Workflow tidak
+berjalan otomatis pada push dan belum dijalankan tanpa konfigurasi aktual berikut.
+
+Repository variables:
+
+- `EXPO_PUBLIC_API_BASE_URL`: HTTPS termasuk `/api/v1`.
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`: Web OAuth client ID dari Firebase yang sama.
+- `ANDROID_APPLICATION_ID`: opsional; default `id.catatharian.app`, harus cocok Firebase.
+
+Repository secrets, masukkan lewat mekanisme secret GitHub, bukan chat/source publik:
+
+- `GOOGLE_SERVICES_JSON_BASE64`: konfigurasi Android Firebase, bukan service account BE.
+- `ANDROID_KEYSTORE_BASE64`: keystore signing internal yang stabil.
+- `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+
+Register SHA-1 dan SHA-256 sertifikat keystore pada aplikasi Android Firebase, aktifkan
+Google Sign-In, dan unduh ulang google-services.json. Workflow mengekspor fingerprint
+sertifikat tanpa password ke ringkasan build dan memeriksa SHA-1/package/Web client ID
+terhadap config serta health HTTPS backend sebelum kompilasi. Keystore yang sama dipakai untuk debug maupun preview
+agar identitas signing stabil. Jangan memakai private Admin credential untuk build mobile.
+
+Validator lokal (membaca process environment, tidak otomatis membaca file `.env`):
+
+```bash
+python scripts/android_config.py --check-backend
+```
+
+Setelah konfigurasi aktual tersedia dan workflow ini sudah masuk default branch lewat review/merge PR, buka Actions → Android internal APK → Run workflow. Pilih development terlebih dahulu untuk pengujian native, lalu preview. GitHub memerlukan file workflow_dispatch pada default branch; setelah terdaftar, branch build dapat dipilih. Artifact hanya tersedia jika Gradle
+benar-benar menghasilkan APK; tidak ada APK contoh atau pengganti berupa bundle JavaScript.
+Workflow memakai runner GitHub dengan JDK/Android SDK dan tidak memerlukan akun EAS.
+EAS profiles lama tetap tersedia sebagai alternatif bila akun/build quota sudah ada;
+resource berbayar baru tidak dibuat otomatis.
+
+Uji pemasangan pada perangkat sendiri setelah artifact APK tersedia:
+
+```bash
+adb devices
+adb install -r path/to/app.apk
+```
+
+Development client memerlukan Metro (`cd mobile && npm start`). Preview berisi bundle
+mandiri. Uji login, catat pengeluaran, reload/login ulang, budget, edit/hapus/filter,
+error koneksi dan logout. Untuk reminder fisik: izin ditolak, ubah jam, disable,
+background, layar terkunci, offline, reboot, timezone dan logout. Catat model/versi Android
+dan perilaku force-stop/baterai yang diamati. Tes emulator bukan pengganti tes HP fisik.
+
+## Guard versi native Expo
+
+Pemeriksaan autolinking menemukan expo-font58.0.12 sebagai peer transitive pada SDK55,
+meskipun expo install --check melaporkan up-to-date. Manifest kini secara eksplisit
+memakai expo-font~55.0.8 dan lockfile hanya memiliki satu instalasi55.0.8.
+`npm run check:native` memeriksa hasil resolve/search Android terhadap rentang SDK
+terpasang dan menolak mismatch/duplikasi. CI frontend dan workflow APK menjalankan guard
+ini. Empat tes regresi dijalankan dengan
+`node --test scripts/tests/check_expo_native_versions.test.cjs` dari root repository.
+Guard/autolinking tidak menggantikan kompilasi Gradle atau uji perangkat.
+
+Referensi resmi: https://docs.expo.dev/build-reference/apk/ dan
+https://docs.expo.dev/versions/v55.0.0/sdk/notifications/
+
+Aturan dispatch GitHub: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow
+
+## Emulator gratis di GitHub Actions
+
+Repository publik ini memakai runner standar ubuntu-latest (bukan larger runner).
+Workflow Android emulator environment berjalan pada perubahan workflow/helper dan
+manual setelah file terdaftar di main. Ia memeriksa KVM, boot Android API35 google_apis
+x86_64 serta ADB/Play services. Run43821500154 benar-benar success; ini bukti lingkungan
+emulator, belum bukti aplikasi terpasang. Tidak perlu akun layanan emulator berbayar.
+
+Setelah backend HTTPS, Firebase/OAuth dan signing tersedia, jalankan workflow Android
+internal APK dengan profil preview. Sesudah APK asli berhasil dibangun/upload, job
+emulator-smoke yang terpisah mengunduhnya, memasang, membuka activity, memeriksa layar
+Masuk dengan Google dari React Native serta proses tetap hidup20detik. Profil development
+membutuhkan Metro dan sengaja tidak diuji sebagai APK mandiri. Pemeriksaan ini tidak
+melakukan login/keuangan nyata atau menggantikan pengujian reminder pada HP fisik.
+
+Perintah helper pada emulator baru yang sesuai:
+
+```bash
+python scripts/android_emulator_smoke.py
+python scripts/android_emulator_smoke.py --apk /path/to/real-preview.apk --package id.catatharian.app
+```
+
+Mode pertama hanya preflight dan melaporkan app_tested=false. Helper membatasi ADB pada
+serial emulator; tidak clear data HP fisik. CI emulator tidak menerima secret signing,
+menyimpan logcat, XML layar atau screenshot akun sebagai artifact.
+
+Referensi: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+serta https://developer.android.com/studio/run/emulator-acceleration.

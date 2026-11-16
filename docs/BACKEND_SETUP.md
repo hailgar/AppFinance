@@ -1,10 +1,14 @@
 > Pemeriksaan FE–BE terbaru: lihat [INTEGRATION.md](INTEGRATION.md).
 
+> Persiapan Azure App Service F1 tersedia di [panduan deployment](../deploy/azure/README.md);
+> login pengguna belum menemukan subscription yang dapat diakses. Penilaian Vercel
+> ada di bagian akhir dokumen ini. Belum ada deployment yang berhasil.
+
 # Catat Harian — Backend & Google Sheets v0.1
 
 Implementasi backend berdasarkan `docs/01_PRD.md` dan `docs/02_API_DAN_DATA.md`: FastAPI, Firebase Authentication, dan ledger append-only Google Sheets. Paket ini berisi backend, tes, OpenAPI aktual, serta alat setup/perawatan. Frontend Android dan penjadwalan notifikasi dikerjakan di bagian proyek masing-masing.
 
-Status verifikasi: **52 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
+Status verifikasi: **58 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
 
 ## Yang sudah diimplementasikan
 
@@ -18,6 +22,106 @@ Status verifikasi: **52 tes lulus, 1 tes integrasi Google dilewati** pada Python
 - Bootstrap tanpa reset, ekspor JSON, validasi backup, restore ke test sheet terpisah yang kosong, dan rebuild tab pemeriksaan.
 
 ## 1. Persiapan lokal
+
+### Jalur laptop Windows untuk pengujian HP (keputusan 16 November 2026)
+
+Pengguna memilih laptop terlebih dahulu setelah Railway trial tidak tersedia.
+Ini tahap pengujian; kebutuhan hosting untuk akses kapan saja tetap belum selesai.
+Gunakan **PowerShell**, Git, Python **3.12**, Node **24**, dan koneksi internet
+untuk Firebase/Sheets. Tidak perlu WSL, Azure subscription atau Docker untuk backend.
+
+Jika belum ada clone lokal, dari folder kerja yang diinginkan:
+
+```powershell
+git clone --branch feat/complete-mvp-integration https://github.com/hailgar/AppFinance.git
+cd AppFinance
+```
+
+Jika clone sudah ada, buka terminal pada folder itu dan periksa `git status` terlebih
+dahulu. Pertahankan perubahan lokal; jangan menggunakan reset atau force checkout.
+
+```powershell
+py -3.12 --version
+py -3.12 scripts/local_backend.py setup
+notepad backend\.env
+```
+
+Runner membuat environment backend, memasang `requirements.lock`, dan menyalin
+`.env.example` **hanya jika `.env` belum ada**. Tidak mengunggah credential, membuka
+firewall, menjalankan tunnel, atau mengakses Sheet pada tahap setup/check.
+
+Isi `.env` secara lokal, dengan data yang sudah dipersiapkan:
+
+| Variabel | Untuk pengujian proyek ini |
+|---|---|
+| `FIREBASE_PROJECT_ID` | `catat-harian-4660f` |
+| `GOOGLE_SHEETS_SPREADSHEET_ID` | ID spreadsheet test privat yang sudah dibagikan; salin bagian ID dari URL Sheet |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path file service-account backend **di luar repository**, misalnya `C:/Users/NAMA/.catat-harian/service-account.json` |
+| `ALLOWED_FIREBASE_UID` | UID akun Google pribadi dari Firebase Authentication → Users; bukan alamat email |
+| `LEDGER_CHECKPOINT_PATH` | Pertahankan `data/ledger-checkpoint.json`; jangan hapus saat restart |
+
+Service account yang telah diberi akses Editor pada Sheet test:
+`firebase-adminsdk-fbsvc@catat-harian-4660f.iam.gserviceaccount.com`.
+Pemberian akses ini tidak membuktikan credential runtime, API, atau IAM Firebase telah
+berfungsi. Jangan kirim JSON private key, token, password atau isi `.env` ke chat.
+File `google-services.json` Android berbeda dari credential Admin backend.
+
+Jika Authentication → Users masih kosong, UID belum tersedia. Selesaikan konfigurasi
+signing/Firebase Android dan login Google native pertama dahulu. Kegagalan koneksi API
+setelah login tidak selalu membatalkan pembuatan user Firebase; periksa Users.
+Jangan mengganti UID dengan email, membuka allowlist, atau memakai bypass autentikasi.
+
+Setelah konfigurasi lengkap:
+
+```powershell
+py -3.12 scripts/local_backend.py check
+py -3.12 scripts/local_backend.py bootstrap
+py -3.12 scripts/local_backend.py run
+```
+
+`bootstrap` mengakses **Sheet test yang dikonfigurasi**, membuat tab/header yang kurang,
+dan memeriksa checkpoint. Hentikan API sebelum perawatan. `run` menjalankan satu worker
+pada loopback `127.0.0.1:8000`, tanpa reload dan tanpa log akses request.
+Pada PowerShell lain, cek proses:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/live
+```
+
+Respons `data.status = ok` hanya membuktikan health proses; belum membuktikan transaksi
+dari HP atau login terautentikasi. Hentikan server dengan Ctrl+C.
+
+### HTTPS dari HP ke backend laptop
+
+APK/validator build proyek ini mewajibkan HTTPS. Membuka HTTP IP Wi-Fi pada browser HP
+tidak otomatis membuat API itu bisa dipakai APK. Untuk uji sementara gunakan
+[Cloudflare Quick Tunnel](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)
+ke loopback, tanpa akun/domain. Instal `cloudflared` dari sumber resmi pada Windows:
+
+```powershell
+winget install --id Cloudflare.cloudflared --exact
+```
+
+Buka PowerShell baru setelah instalasi. Dengan backend tetap menyala, jalankan:
+
+```powershell
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
+Tunnel membuat endpoint API dapat dijangkau melalui internet/Cloudflare. Endpoint privat
+tetap mewajibkan token Firebase dan satu UID yang diizinkan; health publik tanpa data
+keuangan. Gunakan Sheet test dan hentikan tunnel dengan Ctrl+C setelah pengujian.
+Tidak perlu meneruskan port router atau mematikan firewall. Jangan menambahkan autentikasi
+email interaktif Quick Tunnel pada API native karena klien bukan browser.
+
+Salin URL **HTTPS yang benar-benar dicetak cloudflared**, tambahkan `/api/v1`, lalu
+gunakan sebagai `EXPO_PUBLIC_API_BASE_URL` di konfigurasi mobile/build (lihat
+[setup frontend](FRONTEND_SETUP.md)). Cek `/api/v1/health/live` lewat browser HP.
+Jangan memasukkan token ke URL. URL berubah setiap tunnel baru: development client dapat
+memuat konfigurasi baru lewat Metro yang direstart; APK preview yang sudah dibangun
+memerlukan build ulang untuk perubahan URL tertanam. Quick Tunnel tidak menjamin uptime.
+Laptop perlu menyala, internet aktif, backend dan tunnel tetap berjalan. Tahap ini belum
+menghasilkan APK dan bukan pengganti hosting tetap.
 
 Gunakan **Python 3.12**. Ekstrak paket, lalu masuk ke direktori `AppFinance/backend`. Dependency langsung ada di `requirements.in`; seluruh versi hasil resolusi, termasuk alat tes, ada di `requirements.lock`.
 
@@ -143,7 +247,7 @@ python -m scripts.admin validate
 python -m scripts.admin rebuild-views
 ```
 
-Views tidak otomatis diperbarui pada setiap transaksi. Jalankan rebuild setelah berhenti memakai aplikasi atau saat ingin memeriksa Sheet. Jika gagal, jalankan ulang rebuild; jangan mengulang transaksi yang receipt-nya sudah APPLIED. Metadata menyimpan status `BUILDING`, `OK`, atau `FAILED_RETRY_REQUIRED` bila dapat ditulis.
+Views otomatis diperbarui saat startup dan perubahan state ledger. Kegagalan proyeksi tidak mengubah transaksi APPLIED; Metadata menyimpan kegagalan bila masih dapat ditulis. Background retry (PROJECTION_RETRY_SECONDS=30, rentang 5–300) memperbaiki View tanpa transaksi baru dan menangkap append terlambat. GET /api/v1/storage/status memperlihatkan freshness pada akun terautentikasi. Rebuild manual tetap tersedia untuk perawatan saat backend dihentikan; jangan mengulang transaksi hanya karena View tertinggal.
 
 Backup menggunakan JSON agar teks seperti `=SUM(...)` tetap literal dan urutan ledger terjaga. Siapkan direktori backup privat di luar repo, kemudian:
 
@@ -182,3 +286,106 @@ Restore hanya menerima ledger target kosong, mempertahankan urutan, memverifikas
 - [google-auth AuthorizedSession](https://google-auth.readthedocs.io/en/latest/reference/google.auth.transport.requests.html)
 - [Firebase ID token verification](https://firebase.google.com/docs/auth/admin/verify-id-tokens)
 - [Firebase session revocation](https://firebase.google.com/docs/auth/admin/manage-sessions)
+
+## Hosting internal yang sudah tersedia
+
+Konfigurasi provider netral tersedia di `backend/Dockerfile`, `deploy/compose.yaml`,
+dan `deploy/Caddyfile`. Tidak ada provider/VM/layanan berbayar yang dibuat oleh sesi ini.
+Image belum dibangun karena Docker tidak tersedia dalam lingkungan pemeriksaan.
+
+Prasyarat: host Linux yang sudah tersedia dengan Docker Compose, domain DNS ke host,
+port 80/443 dapat diakses, serta Firebase project/UID dan spreadsheet test privat yang benar.
+Gunakan satu instance dan satu worker. Named volume `ledger-data` menyimpan checkpoint
+melintasi restart; jangan menjalankan replica kedua atau membuang volume untuk reset.
+
+Pada host tersebut, dari root repository:
+
+```bash
+cp deploy/.env.example deploy/.env
+# Isi konfigurasi lokal, simpan credential JSON di luar repository.
+docker compose --env-file deploy/.env -f deploy/compose.yaml config --quiet
+docker compose --env-file deploy/.env -f deploy/compose.yaml build backend
+docker compose --env-file deploy/.env -f deploy/compose.yaml run --rm --no-deps backend python -m scripts.admin bootstrap
+docker compose --env-file deploy/.env -f deploy/compose.yaml up -d
+```
+
+Credential dimount sebagai `/run/secrets/google-credentials.json` hanya-baca. Container
+berjalan sebagai UID/GID 10001; file-backed Compose secrets dapat mempertahankan izin host.
+Pastikan file dapat dibaca oleh UID 10001 tanpa membuka akses umum, sesuai kebijakan host.
+Jangan menaruh private key di image atau `.env` publik. Hanya proxy mengekspos port host.
+Caddy mengurus HTTPS untuk hostname yang benar; TLS/ACME baru dapat diverifikasi pada host.
+
+Verifikasi health HTTPS, token tidak valid (401), UID lain (403), satu transaksi dengan
+akun yang diizinkan, View+Metadata, restart, dan baca ulang; gunakan Sheet test terpisah.
+Belum ada URL deployment atau bukti pemeriksaan ini dalam sesi sekarang.
+
+Referensi resmi: https://caddyserver.com/docs/quick-starts/reverse-proxy
+
+
+## Penilaian Vercel — 16 November 2026 WIB
+
+Pengguna meminta pemeriksaan Vercel karena sudah menggunakan provider tersebut.
+Dokumentasi resmi mendukung FastAPI/Python sebagai Vercel Function. Dukungan framework
+belum berarti backend ini memenuhi model eksekusinya. Belum ada deployment Vercel,
+resource storage, upgrade plan atau secret baru yang dibuat pada pemeriksaan ini.
+
+| Bagian | Source sekarang | Dampak pada Vercel / tindak lanjut |
+|---|---|---|
+| Entrypoint | app/main.py mengekspor factory create_app, belum instance app ASGI | Siapkan entrypoint setelah runtime aman; jangan deploy factory sebagai instance |
+| Checkpoint | repositories/checkpoint.py memakai file atomik/fsync/replace | Filesystem Function read-only selain /tmp; file sementara tidak menggantikan anchor durable lintas instance/deployment |
+| Writer | ProcessLease berbasis flock/msvcrt lokal dan LedgerService RLock | Satu Function dapat memiliki banyak instance. Perlu koordinasi penulisan lintas instance yang terbukti aman, atau deployment penulis tunggal terpisah |
+| Laporan | Lifespan task retry default30detik dan state manager dalam memori | Tidak boleh menganggap loop akan hidup ketika tidak ada invocation. Perlu pekerjaan durable/terjadwal dengan perilaku retry yang setara |
+| Google credential | Path certificate atau ADC; file di luar repo | Perlu mekanisme secret runtime dan identitas Google berizin minimum; jangan menaruh JSON key di source/build output |
+| Rate limit | Window per IP di memori proses | Bukan limiter global saat ada beberapa instance; tinjau batas platform/koordinasi |
+
+Blob privat tersedia pada Hobby dengan kuota penggunaan; conditional write ifMatch
+memungkinkan pemeriksaan ETag. Ini kandidat penyimpanan checkpoint, bukan bukti bahwa
+lease, fencing, append UNKNOWN, monotonisitas anchor dan urutan proyeksi sudah aman.
+Hobby Blob berhenti dapat diakses saat kuota terlampaui; quota failure harus menjadi
+error terkontrol, bukan sukses finansial palsu. Jangan menghapus lease/checkpoint atau
+mengandalkan /tmp agar health terlihat lulus. Google Sheets tetap sumber ledger;
+penambahan penyimpanan pendukung perlu rancangan dan pengujian yang jelas.
+
+Daemons saat diperiksa tidak menyediakan filesystem persisten atau inbound HTTP;
+bukan pengganti langsung API satu worker ini. Drives ditujukan untuk Sandbox, sehingga
+bukan disk persisten yang otomatis terpasang ke Function aplikasi.
+
+Bukti lokal khusus penilaian (test adapters, bukan runtime Vercel/Google):
+
+- pytest tests/test_ledger.py::test_snapshot_corruption_and_reordered_source
+  tests/test_projections.py -q: 6 passed, 1 warning Starlette/httpx.
+- Simulasi dua direktori instance: anchor lama mendeteksi truncation; direktori baru
+  belum mempunyai anchor; kedua lease lokal dapat diperoleh bersamaan. Ini menunjukkan
+  mengapa memindahkan path ke /tmp tidak memenuhi jaminan durable/single writer.
+- Tidak ada tes Firebase/Sheets nyata, kompilasi APK atau deployment yang dijalankan.
+
+Akses akun terbaru: plugin sudah terhubung; akun dol-men (Hobby active), team DOL
+(dol3) terbaca. Tidak ada project sesuai hasil filter repository AppFinance/nama catat.
+Percobaan create-project static catat-harian-ui-preview ditolak403 forbidden:
+"You don't have permission to create the project." Project/deployment tidak dibuat;
+CLI Vercel terautentikasi juga tidak tersedia. Izin tulis/project perlu diselesaikan
+sebelum URL preview dapat disediakan. Billing/kuota team tidak dianggap terverifikasi.
+Koneksi berhasil dibaca tidak berarti izin membuat project tersedia. Preview browser
+mandiri di mobile/preview hanya memakai fixtures, tidak menjalankan backend di Vercel.
+
+Referensi resmi:
+
+- https://vercel.com/docs/frameworks/backend/fastapi
+- https://vercel.com/docs/functions/runtimes
+- https://vercel.com/docs/vercel-blob
+- https://vercel.com/docs/vercel-blob/usage-and-pricing
+- https://vercel.com/docs/vercel-blob/private-storage
+- https://vercel.com/daemons
+- https://vercel.com/blog/introducing-vercel-drives-persistent-storage-for-agents
+
+Pembaruan akses browser: pengguna menyelesaikan login Vercel sebagai hailgar pada team
+hailgars-projects (Hobby), berbeda dari koneksi API DOL. Upload static UI sedang tertunda
+pada verifikasi email yang ditolak invalid or expired. Tidak ada backend yang dideploy
+atau checkpoint/lease yang diubah untuk memaksakan Functions. Flow UI bukan provisioning
+identitas Google, host FastAPI atau deployment backend yang siap menerima data nyata.
+
+Catatan host gratis: Render Free kehilangan perubahan filesystem saat restart/redeploy
+atau spin-down dan tidak mendukung persistent disk. Koyeb Free juga tidak mendukung
+volume persisten. Keduanya tidak menggantikan host checkpoint sekarang tanpa rancangan
+storage/koordinasi tambahan. Tidak membuat akun/provider baru atau menonaktifkan checkpoint.
+Referensi: https://render.com/docs/free dan https://www.koyeb.com/docs/reference/instances.

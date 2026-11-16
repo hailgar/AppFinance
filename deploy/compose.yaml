@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: production
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google-credentials.json
+      LEDGER_CHECKPOINT_PATH: /app/data/ledger-checkpoint.json
+      WEB_CONCURRENCY: '1'
+      UVICORN_WORKERS: '1'
+    volumes:
+      - ledger-data:/app/data
+    secrets:
+      - google-credentials
+    expose:
+      - '8000'
+    init: true
+    stop_grace_period: 45s
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in deploy/.env}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+secrets:
+  google-credentials:
+    file: ${GOOGLE_CREDENTIALS_FILE:?Set an absolute credential path outside the repository}
+volumes:
+  ledger-data:
+  caddy-data:
+  caddy-config:

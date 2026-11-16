@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import type { Dashboard, Monthly, Page, Transaction } from "../domain";
+import {
+  historyQuery,
+  type Dashboard,
+  type Monthly,
+  type Page,
+  type Transaction,
+} from "../domain";
 import { createApi } from "../services/api";
 import { CommandRunner, type Command, type Vault } from "../services/commands";
 import { getCategories } from "../services/resources";
@@ -166,5 +172,120 @@ describe.skipIf(!base)("mobile client ↔ FastAPI HTTP contract", () => {
     expect(
       (await api<Transaction>("/transactions/" + original.id)).data.amount,
     ).toBe(1500);
+  });
+  it("uses PUT/DELETE safely for overrides and reuses the tombstone revision", async () => {
+    const pending = vault();
+    const run = new CommandRunner(pending, api);
+    const target = "/budgets/daily/2026-11-17";
+    const put: Command = {
+      key: randomUUID(),
+      path: target,
+      method: "PUT",
+      body: JSON.stringify({ amount: 0, expected_revision: 0 }),
+    };
+    expect(await run.run(put)).toBe("APPLIED");
+    let effective = (
+      await api<{
+        amount: number;
+        override_revision: number;
+        override_active: boolean;
+      }>("/budgets/effective?date=2026-11-17")
+    ).data;
+    expect(effective).toMatchObject({
+      amount: 0,
+      override_revision: 1,
+      override_active: true,
+    });
+    expect(
+      await run.run({
+        key: randomUUID(),
+        path: target + "?expected_revision=1",
+        method: "DELETE",
+      }),
+    ).toBe("APPLIED");
+    effective = (
+      await api<typeof effective>("/budgets/effective?date=2026-11-17")
+    ).data;
+    expect(effective).toMatchObject({
+      amount: 100000,
+      override_revision: 2,
+      override_active: false,
+    });
+    expect(
+      await run.run({
+        key: randomUUID(),
+        path: target,
+        method: "PUT",
+        body: JSON.stringify({
+          amount: 50000,
+          expected_revision: effective.override_revision,
+        }),
+      }),
+    ).toBe("APPLIED");
+    expect(
+      (await api<typeof effective>("/budgets/effective?date=2026-11-17")).data,
+    ).toMatchObject({ amount: 50000, override_revision: 3 });
+  });
+
+  it("edits date and type, filters history, and tombstones the transaction through the mobile command runner", async () => {
+    const original = expense(2500),
+      pending = vault();
+    const runner = new CommandRunner(pending, api);
+    expect(
+      await runner.run({
+        key: randomUUID(),
+        path: "/transactions",
+        method: "POST",
+        body: JSON.stringify(original),
+      }),
+    ).toBe("APPLIED");
+    expect(
+      await runner.run({
+        key: randomUUID(),
+        path: "/transactions/" + original.id,
+        method: "PATCH",
+        body: JSON.stringify({
+          transaction_date: "2026-11-15",
+          type: "INCOME",
+          category_code: "INC_BONUS",
+          expected_revision: 1,
+        }),
+      }),
+    ).toBe("APPLIED");
+    const after = (await api<Transaction>("/transactions/" + original.id)).data;
+    expect(after).toMatchObject({
+      transaction_date: "2026-11-15",
+      type: "INCOME",
+      amount: 2500,
+      revision: 2,
+    });
+    const filtered = (
+      await api<Page<Transaction>>(
+        historyQuery({
+          from: "2026-11-15",
+          to: "2026-11-15",
+          type: "INCOME",
+          category_code: "INC_BONUS",
+        }),
+      )
+    ).data;
+    expect(filtered.items.some((x) => x.id === original.id)).toBe(true);
+    const oldDay = (await api<Dashboard>("/dashboard?date=" + date)).data;
+    expect(oldDay.recent_transactions.some((x) => x.id === original.id)).toBe(
+      false,
+    );
+    expect(
+      await runner.run({
+        key: randomUUID(),
+        path: "/transactions/" + original.id + "?expected_revision=2",
+        method: "DELETE",
+      }),
+    ).toBe("APPLIED");
+    await expect(api("/transactions/" + original.id)).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(
+      (await api<Dashboard>("/dashboard?date=2026-11-15")).data.income_total,
+    ).toBe(0);
   });
 });

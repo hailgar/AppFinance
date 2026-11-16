@@ -11,6 +11,14 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen
+              name="budget"
+              options={{ headerShown: true, title: "Atur budget" }}
+            />
+            <Stack.Screen
+              name="transaction-detail"
+              options={{ headerShown: true, title: "Detail transaksi" }}
+            />
+            <Stack.Screen
               name="transaction"
               options={{
                 presentation: "modal",

@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "../../src/session";
-import { businessDate, rupiah, type Monthly } from "../../src/domain";
+import {
+  businessDate,
+  rupiah,
+  validSummaryMonth,
+  type Monthly,
+} from "../../src/domain";
 import {
   Button,
   Card,
@@ -31,11 +36,10 @@ export default function Summary() {
         title="Tampilkan"
         secondary
         onPress={() => {
-          if (
-            !/^\d{4}-(0[1-9]|1[0-2])$/.test(input) ||
-            input > businessDate().slice(0, 7)
-          ) {
-            setError("Pilih bulan yang valid sampai bulan ini.");
+          if (!validSummaryMonth(input)) {
+            setError(
+              "Pilih bulan dalam riwayat 366 hari terakhir sampai bulan ini.",
+            );
             return;
           }
           setError("");
@@ -60,6 +64,23 @@ export default function Summary() {
               Selisih periode — angka ini bukan saldo rekening.
             </Label>
           </Card>
+          <Title>Pengeluaran per kategori</Title>
+          {q.data.expenses_by_category.length === 0 ? (
+            <Label muted>Belum ada pengeluaran pada bulan ini.</Label>
+          ) : (
+            q.data.expenses_by_category.map((item) => (
+              <Card key={item.category_code}>
+                <Label>{item.category_label}</Label>
+                <Label>
+                  {rupiah(item.amount)} ·{" "}
+                  {q.data.expense_total > 0
+                    ? ((item.amount / q.data.expense_total) * 100).toFixed(1)
+                    : "0"}
+                  % dari pengeluaran
+                </Label>
+              </Card>
+            ))
+          )}
         </>
       )}
     </Screen>

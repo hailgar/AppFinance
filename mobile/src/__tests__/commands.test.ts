@@ -96,3 +96,47 @@ describe("uncertain financial writes", () => {
     expect(await vault.get()).toBeNull();
   });
 });
+
+describe("extended financial commands", () => {
+  it.each(["PUT", "PATCH", "DELETE"] as const)(
+    "keeps %s method, revision, path and body intact across recovery",
+    async (method) => {
+      const vault = memory();
+      const action: Command = {
+        key: "same-operation",
+        path:
+          method === "DELETE"
+            ? "/transactions/one?expected_revision=7"
+            : "/budgets/daily/2026-11-16",
+        method,
+        ...(method === "DELETE"
+          ? {}
+          : { body: '{"amount":0,"expected_revision":7}' }),
+      };
+      const send = vi
+        .fn()
+        .mockResolvedValueOnce(response(202, { status: "UNKNOWN" }))
+        .mockResolvedValueOnce(response(202, { status: "UNKNOWN" }))
+        .mockResolvedValueOnce(response(200));
+      expect(await new CommandRunner(vault, send).run(action)).toBe("UNKNOWN");
+      expect(await new CommandRunner(vault, send).run()).toBe("APPLIED");
+      expect(send.mock.calls[0]?.[1]).toEqual(send.mock.calls[2]?.[1]);
+      expect(send.mock.calls[2]?.[1].body).toBe(action.body);
+    },
+  );
+  it.each([401, 403])(
+    "surfaces %s for account repair while retaining the unresolved command",
+    async (status) => {
+      const vault = memory();
+      const send = vi.fn().mockRejectedValue(new ApiError(status, "DENIED"));
+      await expect(
+        new CommandRunner(vault, send).run(command),
+      ).rejects.toMatchObject({ status });
+      expect(await vault.get()).toEqual(command);
+      await expect(new CommandRunner(vault, send).run()).rejects.toMatchObject({
+        status,
+      });
+      expect(await vault.get()).toEqual(command);
+    },
+  );
+});

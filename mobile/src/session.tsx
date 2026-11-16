@@ -22,6 +22,16 @@ import {
   tokenSource,
 } from "./services/auth";
 import { createApi, errorMessage } from "./services/api";
+import { bindTokenSource } from "./services/sessionIdentity";
+import { sessionTransitions } from "./services/sessionLifecycle";
+import { validApiBase } from "./services/config";
+import { Introduction } from "./onboarding/Introduction";
+import { clearOrphanNativeReminders } from "./reminders/native";
+import {
+  ReminderProvider,
+  stopAccountReminders,
+  resumeAccountReminders,
+} from "./reminders/provider";
 import { CommandRunner } from "./services/commands";
 import { vaultFor } from "./services/vault";
 import { Button, Card, Label, Loading, Screen, Title } from "./components/ui";
@@ -37,7 +47,7 @@ const Context = createContext<ReturnType<typeof createSession> | null>(null);
 function createSession(uid: string) {
   const api = createApi(
     process.env.EXPO_PUBLIC_API_BASE_URL || "",
-    tokenSource,
+    bindTokenSource(uid, tokenSource, () => auth.currentUser?.uid || null),
   );
   const vault = vaultFor(uid);
   return { uid, api, vault, commands: new CommandRunner(vault, api) };
@@ -48,6 +58,9 @@ export const useSession = () => {
   return s;
 };
 function Gate({ children }: { children: ReactNode }) {
+  const configured =
+    validApiBase(process.env.EXPO_PUBLIC_API_BASE_URL || "", __DEV__) &&
+    !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -57,18 +70,28 @@ function Gate({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       observeSession((user) => {
+        void qc.cancelQueries();
         qc.clear();
         setReady(false);
         setPending(false);
+        setError("");
         setUid(user?.uid || null);
       }),
     [qc],
   );
   const session = useMemo(
-    () =>
-      uid && process.env.EXPO_PUBLIC_API_BASE_URL ? createSession(uid) : null,
-    [uid],
+    () => (uid && configured ? createSession(uid) : null),
+    [uid, configured],
   );
+  useEffect(() => {
+    if (uid === null) {
+      void sessionTransitions.run(clearOrphanNativeReminders).catch(() => {
+        setError(
+          "Pengingat lama belum bisa dibersihkan. Tutup lalu buka kembali aplikasi.",
+        );
+      });
+    }
+  }, [uid]);
   useEffect(() => {
     let active = true;
     if (session)
@@ -100,7 +123,10 @@ function Gate({ children }: { children: ReactNode }) {
     setBusy(true);
     setError("");
     try {
-      await login();
+      await sessionTransitions.run(async () => {
+        await clearOrphanNativeReminders();
+        await login();
+      });
     } catch {
       setError(
         "Belum bisa masuk. Periksa koneksi dan konfigurasi akun Google.",
@@ -115,10 +141,7 @@ function Gate({ children }: { children: ReactNode }) {
         <Loading />
       </Screen>
     );
-  if (
-    !process.env.EXPO_PUBLIC_API_BASE_URL ||
-    !process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
-  )
+  if (!configured)
     return (
       <Screen>
         <Title>Catat Harian</Title>
@@ -204,9 +227,7 @@ function Gate({ children }: { children: ReactNode }) {
                   onPress: () =>
                     void (async () => {
                       try {
-                        await session.vault.clear();
-                        qc.clear();
-                        await logout();
+                        await signOutAndClear(session, qc);
                       } catch {
                         setError("Belum bisa keluar. Coba lagi.");
                       }
@@ -218,7 +239,15 @@ function Gate({ children }: { children: ReactNode }) {
         />
       </Screen>
     );
-  return <Context.Provider value={session}>{children}</Context.Provider>;
+  return (
+    <Context.Provider value={session}>
+      <ReminderProvider key={session.uid} uid={session.uid} api={session.api}>
+        <Introduction key={session.uid} uid={session.uid}>
+          {children}
+        </Introduction>
+      </ReminderProvider>
+    </Context.Provider>
+  );
 }
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -231,8 +260,20 @@ export async function signOutAndClear(
   session: ReturnType<typeof useSession>,
   qc: QueryClient,
 ) {
-  await session.vault.clear();
-  qc.clear();
-  await logout();
+  return sessionTransitions.run(async () => {
+    try {
+      await stopAccountReminders(session.uid, false);
+      await qc.cancelQueries();
+      qc.clear();
+      // Keep unresolved recovery data if Firebase sign-out itself fails.
+      await logout();
+      await stopAccountReminders(session.uid, true);
+      await session.vault.clear();
+    } catch (error) {
+      if (auth.currentUser?.uid === session.uid)
+        await resumeAccountReminders(session.uid);
+      throw error;
+    }
+  });
 }
 export const currentUserName = () => auth.currentUser?.displayName || "Kamu";

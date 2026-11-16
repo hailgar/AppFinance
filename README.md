@@ -13,21 +13,23 @@ harian, dan reminder pencatatan. UI berbahasa Indonesia; pembukuan memakai WIB.
 | `scripts/` | Runner tes integrasi FE–BE |
 
 FE mengakses FastAPI; hanya backend yang mengakses Google Sheets.
-Reminder dijadwalkan di perangkat Android pada tahap berikutnya.
+Reminder dijadwalkan lokal di Android; konfirmasi pengiriman pada HP fisik masih diperlukan.
 
 ## Status yang sudah diverifikasi
 
-- FE: typecheck, lint, 26 tes unit dan ekspor bundle Android lulus.
-- BE: 52 tes lulus dengan `requirements.lock`; 1 tes Firebase/Sheets nyata dilewati.
-- Integrasi HTTP: 5 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
+- FE: typecheck, lint,68 tes unit,4 tes guard native dan ekspor bundle Android lulus.
+- BE:58 tes lulus dengan `requirements.lock`;1 tes Firebase/Sheets nyata dilewati.
+- Integrasi HTTP: 7 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
 - Parser kategori FE diperbaiki untuk respons `data.items` dari backend.
 - Workflow GitHub Actions tersedia untuk pemeriksaan FE, BE dan integrasi HTTP.
   Hasil eksekusi GitHub Actions diperiksa setelah push; pengujian lokal bukan bukti CI lulus.
 
-**Belum diverifikasi:** login Google native, Google Sheets nyata, perangkat Android,
-dan APK. Ekspor JavaScript/Hermes bukan APK. Frontend masih iterasi 1; editor budget,
-detail/edit/hapus transaksi, beberapa filter, onboarding dan reminder lokal belum lengkap.
-Tidak ada deployment otomatis.
+**Status terbaru:** lihat [docs/STATUS.md](docs/STATUS.md). Budget default/override,
+detail/edit/hapus transaksi, filter, rincian kategori, pengenalan dan reminder lokal sudah
+diimplementasikan pada branch pekerjaan. Views Sheets kini diperbarui otomatis dengan retry.
+Login Google native, Google Sheets nyata, deployment HTTPS, perangkat Android dan APK
+masih membutuhkan konfigurasi/akses yang disebutkan pada status. Ekspor JavaScript/Hermes bukan APK.
+Tidak ada deployment atau resource berbayar baru yang dibuat otomatis.
 
 ## Menjalankan dan menguji
 
@@ -43,12 +45,16 @@ python -m pytest tests -q
 
 Untuk backend nyata, isi `.env` dari `.env.example`, siapkan Firebase/Sheet privat,
 bootstrap ledger, lalu jalankan satu worker. Ikuti [setup backend](docs/BACKEND_SETUP.md).
+Untuk laptop Windows tersedia `py -3.12 scripts/local_backend.py setup`, lalu
+`check`, `bootstrap`, dan `run` setelah konfigurasi diisi. Panduan yang sama menjelaskan
+URL HTTPS sementara untuk pengujian HP; tidak membutuhkan hosting berbayar.
 
 Frontend memerlukan Node 24, npm, dan konfigurasi native Firebase untuk dijalankan di Android:
 
 ```bash
 cd mobile
 npm ci
+npm run check:native
 npm run typecheck
 npm run lint
 npm test
@@ -63,9 +69,9 @@ Dari root repository, gunakan Python environment backend untuk menjalankan suite
 python scripts/test_backend_contract.py backend
 ```
 
-Runner memulai fixture loopback baru, menjalankan lima tes, lalu menghentikannya.
+Runner memulai fixture loopback baru, menjalankan tujuh tes, lalu menghentikannya.
 Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nyata.
-`npm test` biasa melewati lima tes HTTP kecuali env opt-in disediakan.
+`npm test` biasa melewati tujuh tes HTTP kecuali env opt-in disediakan.
 
 ## Dokumen
 
@@ -74,6 +80,18 @@ Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nya
 - [OpenAPI](docs/openapi.json)
 - [Hasil dan batas pengujian integrasi](docs/INTEGRATION.md)
 - [Handoff backend](docs/HANDOFF_BACKEND.md)
+- [Status dan pembagian pekerjaan](docs/STATUS.md)
+- [Aturan kerja](AGENTS.md)
 
 Simpan `.env`, service-account key dan keystore di luar Git. Backend hanya menerima
 UID Firebase yang diizinkan; tidak ada autentikasi bypass dalam runtime produksi.
+
+## Melihat tampilan
+
+`mobile/preview` merender tujuh layar asli melalui React Native Web. Data contoh
+ditandai permanen; login, Sheets, backend dan notifikasi Android tidak terhubung.
+Jalankan `npm ci --prefix mobile/preview`, lalu
+`npm run build:standalone --prefix mobile/preview` setelah dependency mobile dipasang.
+File `mobile/preview/dist/catat-harian-preview.html` dapat diunduh dari artifact
+Frontend checks. Instruksi dan setting hosting static di
+[README preview](mobile/preview/README.md). Ini bukan APK atau bukti integrasi Google.

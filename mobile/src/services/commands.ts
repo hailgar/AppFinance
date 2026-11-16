@@ -2,8 +2,8 @@ import { ApiError } from "./api";
 export type Command = {
   key: string;
   path: string;
-  method: "POST";
-  body: string;
+  method: "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: string;
 };
 export interface Vault {
   get(): Promise<Command | null>;
@@ -45,7 +45,9 @@ export class CommandRunner {
             await this.vault.clear();
             return result.data.status;
           }
-        } catch {
+        } catch (error) {
+          if (error instanceof ApiError && [401, 403].includes(error.status))
+            throw error;
           return "UNKNOWN";
         }
       } else {
@@ -63,6 +65,9 @@ export class CommandRunner {
         await this.vault.clear();
         return "APPLIED";
       } catch (error) {
+        // Authentication can be repaired without discarding an unresolved write.
+        if (error instanceof ApiError && [401, 403].includes(error.status))
+          throw error;
         if (error instanceof ApiError && error.status === 409) {
           await this.vault.clear();
           return "CONFLICT";

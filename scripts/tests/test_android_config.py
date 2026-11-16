@@ -1,0 +1,89 @@
+import importlib.util
+import json
+from io import BytesIO
+from pathlib import Path
+
+import pytest
+
+spec = importlib.util.spec_from_file_location("android_config", Path(__file__).resolve().parents[1] / "android_config.py")
+config = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(config)
+
+
+@pytest.fixture
+def build(tmp_path):
+    # Validator inputs only; never used to compile an APK or contact Firebase.
+    data = {"project_info": {"project_id": "config-validation-only"}, "client": [{
+        "client_info": {"android_client_info": {"package_name": "id.catatharian.app"}},
+        "oauth_client": [
+            {"client_id": "test.apps.googleusercontent.com", "client_type": 3},
+            {"client_type": 1, "android_info": {"package_name": "id.catatharian.app", "certificate_hash": "A" * 40}},
+        ],
+    }]}
+    (tmp_path / "google-services.json").write_text(json.dumps(data))
+    return tmp_path, data, {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.example/api/v1",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "test.apps.googleusercontent.com",
+        "ANDROID_SIGNING_SHA1": "A" * 40,
+    }
+
+
+def test_accepts_matching_android_oauth_and_signing(build):
+    root, _, env = build
+    config.validate_configuration(env, root)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("EXPO_PUBLIC_API_BASE_URL", "http://api.example/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://user:pass@api.example/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://api.example/api/v1?token=x"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://api.example:wrong/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://api.example:70000/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://api.example:0/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://api.\nexample/api/v1"),
+    ("EXPO_PUBLIC_API_BASE_URL", "https://@api.example/api/v1"),
+    ("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", "wrong.apps.googleusercontent.com"),
+    ("ANDROID_APPLICATION_ID", "id.other.app"),
+    ("ANDROID_SIGNING_SHA1", "B" * 40),
+    ("ANDROID_SIGNING_SHA1", "not-a-fingerprint"),
+])
+def test_rejects_wrong_backend_identity_or_certificate(build, field, value):
+    root, _, env = build
+    with pytest.raises(ValueError):
+        config.validate_configuration({**env, field: value}, root)
+
+
+def test_backend_credential_cannot_be_used_as_mobile_config(build):
+    root, _, env = build
+    (root / "google-services.json").write_text(json.dumps({"type": "service_account", "private_key": "not-a-real-key"}))
+    with pytest.raises(ValueError, match="never backend credentials"):
+        config.validate_configuration(env, root)
+
+
+class HealthResponse(BytesIO):
+    status = 200
+
+    def geturl(self):
+        return "https://api.example/api/v1/health/live"
+
+
+def test_backend_check_reads_the_real_api_health_contract():
+    def transport(request, timeout):
+        assert request.full_url == "https://api.example/api/v1/health/live"
+        assert timeout == 60
+        return HealthResponse(b'{"data":{"status":"ok"},"request_id":"fixture"}')
+    config.validate_backend_health("https://api.example/api/v1/", opener=transport)
+
+
+@pytest.mark.parametrize("body", [b"{}", b"PRIVATE_TEST_SENTINEL", b'x' * 65537])
+def test_unhealthy_or_malformed_backend_blocks_build_without_leaking_body(body):
+    with pytest.raises(ValueError) as error:
+        config.validate_backend_health("https://api.example/api/v1", opener=lambda *_args, **_kwargs: HealthResponse(body))
+    assert "PRIVATE_TEST_SENTINEL" not in str(error.value)
+
+
+def test_http_redirect_target_cannot_pass_https_health_gate():
+    response = HealthResponse(b'{"data":{"status":"ok"}}')
+    response.geturl = lambda: "http://api.example/api/v1/health/live"
+    with pytest.raises(ValueError):
+        config.validate_backend_health("https://api.example/api/v1", opener=lambda *_args, **_kwargs: response)
