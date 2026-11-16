@@ -40,6 +40,34 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
   success. CI fase kode/dokumen `3960f29` juga success: Frontend43789331739,
   Backend43789331800, HTTP43789331713. APK manual belum dijalankan.
 
+## Jalur pengujian laptop Windows — 16 November 2026 WIB
+
+Pengguna memilih backend di laptop terlebih dahulu karena Railway trial tidak tersedia.
+Ini perubahan urutan pengujian, bukan penghapusan target hosting akses kapan saja.
+Koordinator menangani `scripts/local_backend.py`, panduan backend/frontend dan CI Windows;
+tidak ada agent paralel baru yang dibutuhkan untuk perubahan ini.
+
+- Runner `setup/check/bootstrap/run` memakai Python 3.12, virtual environment backend,
+  dan requirements.lock. Setup tidak menimpa `.env`; check tidak mengakses Google.
+- Run memakai loopback, satu worker, checkpoint yang sama dan auth Firebase produksi.
+  Tidak ada perubahan produk, API, izin cleartext Android, atau bypass autentikasi.
+- Dokumentasi Quick Tunnel HTTPS ke laptop ditambahkan pada BACKEND_SETUP yang sudah
+  ada. Tunnel belum dijalankan; endpoint belum dipublikasikan. Pengguna perlu menjalankan
+  backend/tunnel pada Windows sendiri. URL sementara berubah saat tunnel dibuat ulang.
+- Pemeriksaan lokal: 16 tes terarah lulus (5 preflight + 11 storage/startup): redaksi
+  nilai error, placeholder UID,
+  credential hilang/di dalam repository, check tidak mengklaim akses Google. Python
+  compile/help dan git diff --check lulus. Ini belum bukti runtime Windows/native.
+- Job Windows ditambahkan untuk preflight dan tes lease/checkpoint/startup dengan
+  upstream terkontrol. Hasil remote dicatat setelah commit/push; bukan tes Google nyata.
+- Dependensi yang masih memblokir: Python/tools di laptop pengguna, credential Google
+  lokal di luar repository, UID Firebase dan konfigurasi/signing Android aktual.
+- Backend nyata, tunnel aktual, APK, transaksi Sheet test dan HP fisik belum dijalankan.
+  Langkah berikutnya: pengguna menjalankan `py -3.12 --version` dan setup lokal; lengkapi
+  Firebase, bootstrap Sheet test, jalankan API, lalu lanjutkan build Android dan uji HP.
+- Commit terkait: perubahan runner/panduan/CI pada branch `feat/complete-mvp-integration`
+  (SHA hasil push dicatat pada laporan koordinator).
+
 ## Kondisi Google, hosting dan perangkat yang diamati
 
 - Dua Google Sheets native terpisah sudah dibuat: database pribadi dan pengujian;

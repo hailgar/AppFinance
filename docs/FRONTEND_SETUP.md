@@ -66,6 +66,14 @@ npm start
 
 Untuk HP fisik, `localhost` menunjuk HP itu sendiri. Gunakan backend HTTPS yang bisa dijangkau HP. Saat memakai backend lokal, pilih IP LAN komputer pada Wi-Fi yang sama dan aturan firewall yang sesuai, atau gunakan USB `adb reverse tcp:8000 tcp:8000`. HTTP lokal hanya dapat dipakai bila build development dikonfigurasi mengizinkan cleartext secara spesifik; konfigurasi bawaan proyek ini tidak melonggarkan transport jaringan Android. Akses di luar development harus HTTPS. Backend lokal berhenti tersedia jika komputer/server mati.
 
+Untuk jalur laptop Windows yang dipilih pengguna, gunakan bagian **Jalur laptop Windows**
+dan **HTTPS dari HP** di [BACKEND_SETUP.md](BACKEND_SETUP.md). Backend berjalan pada
+loopback, lalu Quick Tunnel memberi URL HTTPS sementara. Gunakan URL aktual tunnel
+ditambah `/api/v1`; tidak ada perubahan yang mengizinkan cleartext di APK.
+URL Quick Tunnel berubah saat proses dibuat ulang. Restart Metro setelah mengubah
+`.env` untuk development client; APK preview yang mandiri harus dibangun ulang jika
+API URL tertanam berubah. Expo Go tetap tidak mendukung modul native aplikasi ini.
+
 ## Pemeriksaan
 
 ```bash

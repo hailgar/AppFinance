@@ -23,6 +23,106 @@ Status verifikasi: **58 tes lulus, 1 tes integrasi Google dilewati** pada Python
 
 ## 1. Persiapan lokal
 
+### Jalur laptop Windows untuk pengujian HP (keputusan 16 November 2026)
+
+Pengguna memilih laptop terlebih dahulu setelah Railway trial tidak tersedia.
+Ini tahap pengujian; kebutuhan hosting untuk akses kapan saja tetap belum selesai.
+Gunakan **PowerShell**, Git, Python **3.12**, Node **24**, dan koneksi internet
+untuk Firebase/Sheets. Tidak perlu WSL, Azure subscription atau Docker untuk backend.
+
+Jika belum ada clone lokal, dari folder kerja yang diinginkan:
+
+```powershell
+git clone --branch feat/complete-mvp-integration https://github.com/hailgar/AppFinance.git
+cd AppFinance
+```
+
+Jika clone sudah ada, buka terminal pada folder itu dan periksa `git status` terlebih
+dahulu. Pertahankan perubahan lokal; jangan menggunakan reset atau force checkout.
+
+```powershell
+py -3.12 --version
+py -3.12 scripts/local_backend.py setup
+notepad backend\.env
+```
+
+Runner membuat environment backend, memasang `requirements.lock`, dan menyalin
+`.env.example` **hanya jika `.env` belum ada**. Tidak mengunggah credential, membuka
+firewall, menjalankan tunnel, atau mengakses Sheet pada tahap setup/check.
+
+Isi `.env` secara lokal, dengan data yang sudah dipersiapkan:
+
+| Variabel | Untuk pengujian proyek ini |
+|---|---|
+| `FIREBASE_PROJECT_ID` | `catat-harian-4660f` |
+| `GOOGLE_SHEETS_SPREADSHEET_ID` | ID spreadsheet test privat yang sudah dibagikan; salin bagian ID dari URL Sheet |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path file service-account backend **di luar repository**, misalnya `C:/Users/NAMA/.catat-harian/service-account.json` |
+| `ALLOWED_FIREBASE_UID` | UID akun Google pribadi dari Firebase Authentication → Users; bukan alamat email |
+| `LEDGER_CHECKPOINT_PATH` | Pertahankan `data/ledger-checkpoint.json`; jangan hapus saat restart |
+
+Service account yang telah diberi akses Editor pada Sheet test:
+`firebase-adminsdk-fbsvc@catat-harian-4660f.iam.gserviceaccount.com`.
+Pemberian akses ini tidak membuktikan credential runtime, API, atau IAM Firebase telah
+berfungsi. Jangan kirim JSON private key, token, password atau isi `.env` ke chat.
+File `google-services.json` Android berbeda dari credential Admin backend.
+
+Jika Authentication → Users masih kosong, UID belum tersedia. Selesaikan konfigurasi
+signing/Firebase Android dan login Google native pertama dahulu. Kegagalan koneksi API
+setelah login tidak selalu membatalkan pembuatan user Firebase; periksa Users.
+Jangan mengganti UID dengan email, membuka allowlist, atau memakai bypass autentikasi.
+
+Setelah konfigurasi lengkap:
+
+```powershell
+py -3.12 scripts/local_backend.py check
+py -3.12 scripts/local_backend.py bootstrap
+py -3.12 scripts/local_backend.py run
+```
+
+`bootstrap` mengakses **Sheet test yang dikonfigurasi**, membuat tab/header yang kurang,
+dan memeriksa checkpoint. Hentikan API sebelum perawatan. `run` menjalankan satu worker
+pada loopback `127.0.0.1:8000`, tanpa reload dan tanpa log akses request.
+Pada PowerShell lain, cek proses:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/health/live
+```
+
+Respons `data.status = ok` hanya membuktikan health proses; belum membuktikan transaksi
+dari HP atau login terautentikasi. Hentikan server dengan Ctrl+C.
+
+### HTTPS dari HP ke backend laptop
+
+APK/validator build proyek ini mewajibkan HTTPS. Membuka HTTP IP Wi-Fi pada browser HP
+tidak otomatis membuat API itu bisa dipakai APK. Untuk uji sementara gunakan
+[Cloudflare Quick Tunnel](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)
+ke loopback, tanpa akun/domain. Instal `cloudflared` dari sumber resmi pada Windows:
+
+```powershell
+winget install --id Cloudflare.cloudflared --exact
+```
+
+Buka PowerShell baru setelah instalasi. Dengan backend tetap menyala, jalankan:
+
+```powershell
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
+Tunnel membuat endpoint API dapat dijangkau melalui internet/Cloudflare. Endpoint privat
+tetap mewajibkan token Firebase dan satu UID yang diizinkan; health publik tanpa data
+keuangan. Gunakan Sheet test dan hentikan tunnel dengan Ctrl+C setelah pengujian.
+Tidak perlu meneruskan port router atau mematikan firewall. Jangan menambahkan autentikasi
+email interaktif Quick Tunnel pada API native karena klien bukan browser.
+
+Salin URL **HTTPS yang benar-benar dicetak cloudflared**, tambahkan `/api/v1`, lalu
+gunakan sebagai `EXPO_PUBLIC_API_BASE_URL` di konfigurasi mobile/build (lihat
+[setup frontend](FRONTEND_SETUP.md)). Cek `/api/v1/health/live` lewat browser HP.
+Jangan memasukkan token ke URL. URL berubah setiap tunnel baru: development client dapat
+memuat konfigurasi baru lewat Metro yang direstart; APK preview yang sudah dibangun
+memerlukan build ulang untuk perubahan URL tertanam. Quick Tunnel tidak menjamin uptime.
+Laptop perlu menyala, internet aktif, backend dan tunnel tetap berjalan. Tahap ini belum
+menghasilkan APK dan bukan pengganti hosting tetap.
+
 Gunakan **Python 3.12**. Ekstrak paket, lalu masuk ke direktori `AppFinance/backend`. Dependency langsung ada di `requirements.in`; seluruh versi hasil resolusi, termasuk alat tes, ada di `requirements.lock`.
 
 macOS/Linux:

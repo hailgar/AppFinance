@@ -45,6 +45,9 @@ python -m pytest tests -q
 
 Untuk backend nyata, isi `.env` dari `.env.example`, siapkan Firebase/Sheet privat,
 bootstrap ledger, lalu jalankan satu worker. Ikuti [setup backend](docs/BACKEND_SETUP.md).
+Untuk laptop Windows tersedia `py -3.12 scripts/local_backend.py setup`, lalu
+`check`, `bootstrap`, dan `run` setelah konfigurasi diisi. Panduan yang sama menjelaskan
+URL HTTPS sementara untuk pengujian HP; tidak membutuhkan hosting berbayar.
 
 Frontend memerlukan Node 24, npm, dan konfigurasi native Firebase untuk dijalankan di Android:
 
