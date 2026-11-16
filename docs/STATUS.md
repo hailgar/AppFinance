@@ -34,7 +34,8 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
   warning google-services.json belum tersedia. Bundle bukan APK.
 - Syntax Python/YAML/Bash agent: lulus; git diff --check lulus.
 - CI baseline `010bd68`: Frontend checks, Backend checks dan FE-BE HTTP integration
-  success. Hasil commit fase ini ditautkan pada PR setelah push; APK manual belum dijalankan.
+  success. CI fase kode/dokumen `3960f29` juga success: Frontend43789331739,
+  Backend43789331800, HTTP43789331713. APK manual belum dijalankan.
 
 ## Kondisi Google, hosting dan perangkat yang diamati
 
@@ -53,7 +54,11 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 - Firebase menunjukkan service account Admin SDK bawaan. Private key baru tidak
   dibuat; identitas backend khusus dengan izin minimum belum dikonfigurasi.
   Google Cloud IAM menampilkan Site Unavailable pada browser sesi ini.
-- Azure Portal mengarah ke sign-in Microsoft. Belum ada subscription, region F1,
+- Azure Portal meminta login Microsoft; metode GitHub dipilih melalui formulir aman.
+  GitHub sudah menampilkan consent akun hailgar. Klik Authorize Microsoft-corp
+  ditolak automatic approval review karena memberikan akses OAuth baca profil/email
+  kepada Microsoft; menunggu persetujuan eksplisit pengguna pada langkah tersebut.
+  Belum ada subscription, region F1,
   ARM what-if, resource atau deployment yang terverifikasi. Template F1 disiapkan
   sebagai hosting pengujian gratis; tanpa SLA/Always On dan memiliki kuota.
   Tidak ada akun baru, trial kredit, upgrade Spark atau resource berbayar dibuat.
@@ -64,7 +69,8 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 
 ## Langkah berikutnya dan hambatan minimum
 
-1. Login akun Microsoft Azure yang memiliki subscription untuk memastikan F1 tersedia.
+1. Konfirmasi consent Microsoft-Corporation (baca profil/email GitHub hailgar)
+   agar login Azure dapat dilanjutkan, lalu verifikasi subscription/F1 tersedia.
    Hentikan jika harus memakai tier berbayar; jangan membeli resource otomatis.
 2. Selesaikan akses Google Cloud IAM: identitas backend khusus, Sheets API, izin
    verifikasi revocation Firebase dan Editor hanya pada spreadsheet yang dipakai.
