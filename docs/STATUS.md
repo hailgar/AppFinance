@@ -55,9 +55,11 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
   dibuat; identitas backend khusus dengan izin minimum belum dikonfigurasi.
   Google Cloud IAM menampilkan Site Unavailable pada browser sesi ini.
 - Azure Portal meminta login Microsoft; metode GitHub dipilih melalui formulir aman.
-  GitHub sudah menampilkan consent akun hailgar. Klik Authorize Microsoft-corp
-  ditolak automatic approval review karena memberikan akses OAuth baca profil/email
-  kepada Microsoft; menunggu persetujuan eksplisit pengguna pada langkah tersebut.
+  Pengguna mengizinkan consent Microsoft-Corporation. Halaman sudah melewati
+  otorisasi GitHub; kode email Microsoft diterima melalui formulir aman. Kini
+  tampil pembaruan Microsoft Services Agreement. Automatic approval review menolak
+  tombol Next karena dapat menerima ketentuan mengikat; menunggu persetujuan khusus
+  untuk pembaruan perjanjian tersebut. Tidak ada kode/token login dicatat di source.
   Belum ada subscription, region F1,
   ARM what-if, resource atau deployment yang terverifikasi. Template F1 disiapkan
   sebagai hosting pengujian gratis; tanpa SLA/Always On dan memiliki kuota.
@@ -69,8 +71,8 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 
 ## Langkah berikutnya dan hambatan minimum
 
-1. Konfirmasi consent Microsoft-Corporation (baca profil/email GitHub hailgar)
-   agar login Azure dapat dilanjutkan, lalu verifikasi subscription/F1 tersedia.
+1. Konfirmasi tombol Next pada pembaruan Microsoft Services Agreement agar login
+   Azure dapat dilanjutkan, lalu verifikasi subscription/F1 tersedia.
    Hentikan jika harus memakai tier berbayar; jangan membeli resource otomatis.
 2. Selesaikan akses Google Cloud IAM: identitas backend khusus, Sheets API, izin
    verifikasi revocation Firebase dan Editor hanya pada spreadsheet yang dipakai.
