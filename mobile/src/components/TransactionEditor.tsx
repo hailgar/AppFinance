@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
@@ -13,13 +13,15 @@ import {
   rupiah,
   validTransactionDate,
   type Transaction,
-  type TransactionType,
 } from "../domain";
 import { useSession } from "../session";
 import {
   Button,
   Card,
   Field,
+  AmountField,
+  ScreenHeading,
+  SegmentedControl,
   Label,
   Loading,
   Problem,
@@ -28,6 +30,7 @@ import {
 } from "./ui";
 import { errorMessage } from "../services/api";
 import { getCategories } from "../services/resources";
+import { CategoryPicker } from "./CategoryPicker";
 import { CommandFeedback } from "./CommandFeedback";
 import type { useFinancialCommand } from "./useFinancialCommand";
 const schema = z.object({
@@ -121,10 +124,16 @@ export function TransactionEditor({
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <Screen>
-        <Label muted>
-          Hanya pengeluaran yang mengurangi budget. Simpan memerlukan koneksi
-          internet.
-        </Label>
+        <ScreenHeading
+          title={
+            snapshot
+              ? editing
+                ? "Edit catatanmu"
+                : "Detail transaksi"
+              : "Catat transaksi"
+          }
+          subtitle="Catatan kecil, hari lebih terarah."
+        />
         {editable && !editing && snapshot && (
           <>
             <Card>
@@ -176,31 +185,22 @@ export function TransactionEditor({
         )}
         {editable && editing && (
           <>
-            <View style={{ gap: 8 }}>
-              <Label>Jenis transaksi</Label>
-              {(["EXPENSE", "INCOME"] as TransactionType[]).map((value) => (
-                <Button
-                  key={value}
-                  title={
-                    (type === value ? "✓ " : "") +
-                    (value === "EXPENSE" ? "Pengeluaran" : "Pemasukan")
-                  }
-                  secondary={type !== value}
-                  onPress={() => {
-                    setValue("type", value);
-                    setValue("category_code", "");
-                  }}
-                />
-              ))}
-            </View>
+            <SegmentedControl
+              value={type}
+              options={[
+                { value: "EXPENSE", label: "Pengeluaran" },
+                { value: "INCOME", label: "Pemasukan" },
+              ]}
+              onChange={(value) => {
+                setValue("type", value);
+                setValue("category_code", "");
+              }}
+            />
             <Controller
               control={control}
               name="amount"
               render={({ field: { value, onChange } }) => (
-                <Field
-                  label="Nominal rupiah"
-                  placeholder="25000"
-                  keyboardType="number-pad"
+                <AmountField
                   value={value}
                   onChangeText={onChange}
                   error={errors.amount?.message}
@@ -216,17 +216,11 @@ export function TransactionEditor({
                 retry={() => void categories.refetch()}
               />
             ) : (
-              categories.data.map((category) => (
-                <Button
-                  key={category.code}
-                  title={
-                    (watch("category_code") === category.code ? "✓ " : "") +
-                    category.label
-                  }
-                  secondary={watch("category_code") !== category.code}
-                  onPress={() => setValue("category_code", category.code)}
-                />
-              ))
+              <CategoryPicker
+                items={categories.data}
+                value={watch("category_code")}
+                onChange={(value) => setValue("category_code", value)}
+              />
             )}
             {!!errors.category_code && (
               <Label>{errors.category_code.message}</Label>
@@ -259,6 +253,7 @@ export function TransactionEditor({
             />
             <Button
               title="Simpan transaksi"
+              icon="checkmark-outline"
               disabled={
                 offline ||
                 !categories.data?.some((c) => c.code === watch("category_code"))
@@ -266,6 +261,12 @@ export function TransactionEditor({
               onPress={() => void handleSubmit(save)()}
             />
           </>
+        )}
+        {editable && editing && (
+          <Label muted small>
+            Pemasukan tidak menambah budget harian. Simpan memerlukan koneksi
+            internet.
+          </Label>
         )}
         <CommandFeedback
           mutation={mutation}

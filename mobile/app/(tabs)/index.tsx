@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, View } from "react-native";
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "../../src/session";
-import { businessDate, type Dashboard, rupiah } from "../../src/domain";
+import { businessDate, type Dashboard } from "../../src/domain";
 import { BudgetCard } from "../../src/components/BudgetCard";
 import { Transactions } from "../../src/components/Transactions";
 import {
   Button,
-  Card,
-  Label,
+  AppHeader,
+  ScreenHeading,
+  SectionHeading,
+  TextButton,
   Loading,
   Problem,
   Screen,
-  Title,
 } from "../../src/components/ui";
 import { errorMessage } from "../../src/services/api";
 export default function Today() {
@@ -36,14 +37,14 @@ export default function Today() {
   });
   return (
     <Screen>
-      <Label muted>
-        {new Intl.DateTimeFormat("id-ID", {
+      <AppHeader onAccountPress={() => router.push("/(tabs)/settings")} />
+      <ScreenHeading
+        title="Keuangan hari ini"
+        subtitle={new Intl.DateTimeFormat("id-ID", {
           timeZone: "Asia/Jakarta",
           dateStyle: "full",
-        }).format(new Date(today + "T12:00:00+07:00"))}{" "}
-        · WIB
-      </Label>
-      <Title>Hari ini, lebih terarah.</Title>
+        }).format(new Date(today + "T12:00:00+07:00"))}
+      />
       {q.isPending ? (
         <Loading />
       ) : q.isError ? (
@@ -56,25 +57,32 @@ export default function Today() {
           <BudgetCard
             budget={q.data.budget_amount}
             expense={q.data.expense_total}
+            income={q.data.income_total}
+            onEdit={() => router.push("/budget")}
           />
-          <Button
-            title="Atur budget"
-            secondary
-            onPress={() => router.push("/budget")}
-          />
-          <Card>
-            <Label>Pemasukan hari ini</Label>
-            <Label>{rupiah(q.data.income_total)}</Label>
-            <Label muted>
-              Pemasukan tidak menambah budget secara otomatis.
-            </Label>
-          </Card>
           <Button
             title="Catat transaksi"
+            icon="add-outline"
             onPress={() => router.push("/transaction")}
           />
-          <Title>Transaksi terbaru</Title>
-          <Transactions items={q.data.recent_transactions} />
+          <View style={{ gap: 2 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <SectionHeading>Transaksi terbaru</SectionHeading>
+              <TextButton
+                title="Lihat semua"
+                onPress={() => router.push("/(tabs)/history")}
+              />
+            </View>
+            <Transactions items={q.data.recent_transactions} />
+          </View>
         </>
       )}
     </Screen>

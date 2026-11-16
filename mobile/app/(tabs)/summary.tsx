@@ -1,3 +1,5 @@
+import { Text, View } from "react-native";
+import { theme as t } from "../../src/theme";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "../../src/session";
@@ -15,7 +17,9 @@ import {
   Loading,
   Problem,
   Screen,
-  Title,
+  ScreenHeading,
+  SectionHeading,
+  Eyebrow,
 } from "../../src/components/ui";
 import { errorMessage } from "../../src/services/api";
 export default function Summary() {
@@ -30,7 +34,10 @@ export default function Summary() {
   });
   return (
     <Screen>
-      <Title>Ringkasan</Title>
+      <ScreenHeading
+        title="Ringkasan bulanan"
+        subtitle="Gambaran yang lebih jelas"
+      />
       <Field label="Bulan (YYYY-MM)" value={input} onChangeText={setInput} />
       <Button
         title="Tampilkan"
@@ -57,19 +64,50 @@ export default function Summary() {
       ) : (
         <>
           <Card>
-            <Label>Pemasukan · {rupiah(q.data.income_total)}</Label>
-            <Label>Pengeluaran · {rupiah(q.data.expense_total)}</Label>
-            <Title>{rupiah(q.data.net_flow)}</Title>
-            <Label muted>
-              Selisih periode — angka ini bukan saldo rekening.
+            <Eyebrow>Selisih periode</Eyebrow>
+            <Text
+              style={{
+                fontSize: Math.abs(q.data.net_flow) > 1_000_000_000 ? 28 : 34,
+                fontWeight: "700",
+                letterSpacing: -1,
+                color: t.color.text,
+              }}
+            >
+              {rupiah(q.data.net_flow)}
+            </Text>
+            <Label muted small>
+              Pemasukan dikurangi pengeluaran. Angka ini bukan saldo rekening.
             </Label>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 16,
+                paddingTop: 20,
+                borderTopWidth: 1,
+                borderColor: t.color.line,
+              }}
+            >
+              <View style={{ flexGrow: 1, flexBasis: "42%", gap: 6 }}>
+                <Label muted small>
+                  Pemasukan
+                </Label>
+                <SectionHeading>{rupiah(q.data.income_total)}</SectionHeading>
+              </View>
+              <View style={{ flexGrow: 1, flexBasis: "42%", gap: 6 }}>
+                <Label muted small>
+                  Pengeluaran
+                </Label>
+                <SectionHeading>{rupiah(q.data.expense_total)}</SectionHeading>
+              </View>
+            </View>
           </Card>
-          <Title>Pengeluaran per kategori</Title>
+          <SectionHeading>Pengeluaran per kategori</SectionHeading>
           {q.data.expenses_by_category.length === 0 ? (
             <Label muted>Belum ada pengeluaran pada bulan ini.</Label>
           ) : (
             q.data.expenses_by_category.map((item) => (
-              <Card key={item.category_code}>
+              <View key={item.category_code} style={{ gap: 10 }}>
                 <Label>{item.category_label}</Label>
                 <Label>
                   {rupiah(item.amount)} ·{" "}
@@ -78,7 +116,26 @@ export default function Summary() {
                     : "0"}
                   % dari pengeluaran
                 </Label>
-              </Card>
+                <View
+                  accessible
+                  accessibilityLabel={`${item.category_label}: ${rupiah(item.amount)}`}
+                  style={{
+                    height: 6,
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    backgroundColor: t.color.neutral,
+                  }}
+                >
+                  <View
+                    style={{
+                      height: 6,
+                      borderRadius: 4,
+                      backgroundColor: t.color.action,
+                      width: `${q.data.expense_total > 0 ? Math.min(100, (item.amount / q.data.expense_total) * 100) : 0}%`,
+                    }}
+                  />
+                </View>
+              </View>
             ))
           )}
         </>
