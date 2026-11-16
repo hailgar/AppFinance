@@ -8,7 +8,7 @@ Python3.12.14 virtual environment terpisah memakai requirements.lock.
 | mobile: npm run typecheck | Lulus exit0 |
 | mobile: npm run lint | Lulus exit0 |
 | mobile: npm test | 68 passed, 7 HTTP skipped (mode unit) |
-| backend: python -m pytest tests -q | 57 passed, 1 Google-live skipped, 1 deprecation warning |
+| backend: python -m pytest tests -q | 58 passed, 1 Google-live skipped, 1 deprecation warning |
 | python scripts/test_backend_contract.py backend | 7 passed melalui HTTP nyata, storage/auth test adapters |
 | python -m pytest scripts/tests -q | 27 passed, 7 subtests passed; Android19 + Azure8, bukan build/deploy |
 | EXPO_OFFLINE=1 npm run check:expo | Dependencies up to date, exit0; offline validation warning |
@@ -77,3 +77,23 @@ Pemeriksaan yang benar-benar dijalankan untuk mobile/preview:
 Preview memakai fixtures untuk sesi, command, storage, laporan dan reminder. Belum
 ada login Google, penulisan Sheets nyata, pengiriman native atau APK dalam fase ini.
 CI frontend kini membangun preview standalone setelah pemeriksaan aplikasi utama.
+
+## Penguatan native dan startup produksi
+
+- Fresh mobile npm ci berhasil. Ketidakcocokan expo-font58.0.12 pada SDK55 ditemukan
+  lewat Android autolinking; manifest kini ~55.0.8 dan resolve hanya satu versi55.0.8.
+- check:native resolve/search Android exit0;4 tes guard native passed, mencakup peer58,
+  duplikasi versi sama dan output tidak lengkap. Guard menjadi langkah CI dan build APK.
+- Typecheck/lint exit0;68 FE passed/7 HTTP skipped. Expo offline compatibility exit0;
+  config --type prebuild exit0 (bukan native generation lengkap); Hermes1395modul exit0
+  dengan warning google-services.json tidak tersedia.
+-58 BE passed/1 Google-live skipped; pip check exit0. Regresi factory membuktikan
+  receipt setelah restart, lease menolak writer kedua, truncation fail-closed, lease
+  dilepas setelah startup gagal. Adapter upstream terkontrol, bukan Google nyata.
+- Live test diperbaiki memakai create_app(config) produksi, tidak lagi menyuntikkan
+  repository/verifier sehingga checkpoint dan lease dilewati. Tetap belum dieksekusi
+  dengan Google. Sheet target harus baru/kosong dan berbeda dari source konfigurasi.
+- HTTP7 passed dijalankan ulang; scripts/tests27 passed/7 subtests; build standalone
+  exit0 dan bytes tetap sama dengan preview yang sebelumnya ditinjau di browser.
+- Runtime Android preflight exit1 (API URL belum diisi). Firebase download timeout15s;
+  IAM Site Unavailable; Vercel browser login wall. Tidak ada Gradle/deploy/HP proof.

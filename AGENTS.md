@@ -32,7 +32,8 @@ Run focused checks in your area and report exact results and remaining blockers.
 
 ## Checks
 
-- FE: cd mobile && npm run typecheck && npm run lint && npm test
+- FE: cd mobile && npm run check:native && npm run typecheck && npm run lint && npm test
+- Native guard: node --test scripts/tests/check_expo_native_versions.test.cjs (from repo root)
 - Expo: cd mobile && EXPO_OFFLINE=1 npm run check:expo && EXPO_OFFLINE=1 npm run export:android
 - BE: cd backend && python -m pytest tests -q (Python 3.12, requirements.lock)
 - HTTP contract from root with backend Python environment:

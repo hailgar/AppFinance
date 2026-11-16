@@ -71,3 +71,24 @@ Dependency terpisah dipasang dari npm dan `npm run build` berhasil. Bundle tidak
 mengandung Firebase native/Google Sign-In. Peringatan bundler `use client` berasal
 dari dependency; preview adalah client-only React dan bukan React Server Components.
 Browser/interaction QA dan deployment dicatat koordinator di `docs/STATUS.md`.
+
+## Project static Vercel setelah akses tersedia
+
+Gunakan team DOL (`dol3`), project `catat-harian-ui-preview`, repository AppFinance
+dan branch `feat/complete-mvp-integration`. Ini hanya preview UI. Project belum ada;
+percobaan create-project ditolak403. Jangan memindahkan source backend ke Function
+atau mengubah plan untuk mengatasi error izin tersebut.
+
+| Pengaturan project | Nilai |
+|---|---|
+| Framework preset | Other |
+| Root directory | Root repository (`./`) |
+| Node.js |24.x |
+| Install command | `npm ci --prefix mobile && npm ci --prefix mobile/preview` |
+| Build command | `npm run build:standalone --prefix mobile/preview` |
+| Output directory | `mobile/preview/dist` |
+| Environment variables | Tidak diperlukan untuk fixture preview |
+
+Root repository dibutuhkan karena preview mengimpor layar asli dari mobile/app.
+Jangan menambahkan secret backend atau file Firebase ke project preview. Pertahankan
+proteksi deployment yang tersedia; verifikasi target preview dan commit sebelum deploy.

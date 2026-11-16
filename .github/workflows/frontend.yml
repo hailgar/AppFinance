@@ -18,6 +18,8 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
+      - run: npm run check:native
+      - run: node --test ../scripts/tests/check_expo_native_versions.test.cjs
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

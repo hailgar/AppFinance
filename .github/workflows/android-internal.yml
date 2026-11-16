@@ -57,6 +57,8 @@ jobs:
           python scripts/android_config.py --check-backend
       - run: npm ci
         working-directory: mobile
+      - run: npm run check:native
+        working-directory: mobile
       - run: npx expo prebuild --platform android --no-install
         working-directory: mobile
       - name: Compile signed APK

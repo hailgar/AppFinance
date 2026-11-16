@@ -11,8 +11,10 @@ Belum ada URL backend yang berhasil di-deploy atau APK yang berhasil dibangun.
 | Tugas | Penanggung jawab | Dependensi | Hasil / langkah berikutnya |
 |---|---|---|---|
 | UI keuangan, API, recovery, sesi | FE agent + koordinator | Firebase native/API HTTPS | Budget default/override, tambah/edit/hapus, riwayat/filter, ringkasan dan error/revision/UNKNOWN diimplementasikan; uji perangkat menunggu build |
-| Ledger, auth, aturan keuangan, laporan Sheets | BE agent | Credential Google, Sheet test, UID allowlist | 57 tes BE lulus; 1 Google-live skip. Views otomatis dan retry30detik; kegagalan View tidak membatalkan receipt |
+| Ledger, auth, aturan keuangan, laporan Sheets | BE agent | Credential Google, Sheet test, UID allowlist | 58 tes BE lulus; 1 Google-live skip. Views otomatis dan retry30detik; kegagalan View tidak membatalkan receipt |
 | Reminder dan logout | Reminder agent + integration_reconcile + koordinator | Native Android | 17 tes controller,8 adapter native,3 serialisasi sesi; cleanup marker/UID, notifikasi tampil dan last response; uji fisik belum berjalan |
+| Native compatibility | android_release_check + koordinator | Expo55 lock/autolinking | Peer expo-font58 diganti55.0.8; strict guard CI +4 tes lulus; bukan bukti Gradle/APK |
+| Startup produksi | backend_release_check | Adapter Google saat live | Factory lifecycle diuji: checkpoint/restart, receipt, single-writer, truncation; live test diperbaiki agar tidak melewati factory |
 | Build Android | android_finish | Backend HTTPS, Firebase config/OAuth, signing stabil | 19 tes validator lulus; health backend diperiksa sebelum kompilasi; hook signing finalizeDsl; preflight aktual masih blocked |
 | Paket hosting gratis | deploy_finish | Akun/subscription Azure aktif, Google secrets | 8 tes Azure lulus; F1-only, checkpoint file persisten, ZIP aman, batas nama plan diperbaiki; ARM/deploy nyata belum berjalan |
 | Review PR alternatif | integration_reconcile | PR #1 / PR #2 | PR #1 arsitektur alternatif; hanya cleanup native dan tes relevan diport ke PR #2, tidak digabung seluruhnya |
@@ -28,7 +30,7 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 ## Bukti pemeriksaan
 
 - FE: typecheck dan lint exit0; 68 tes unit passed,7 HTTP skipped pada mode unit (HTTP dijalankan terpisah).
-- BE:57 passed/1 Google-live skipped, satu warning deprecation Starlette/httpx.
+- BE:58 passed/1 Google-live skipped, satu warning deprecation Starlette/httpx.
 - Integrasi HTTP:7 passed dengan klien FE/FastAPI aktual, auth/storage khusus tes.
 - Konfigurasi:27 passed +7 subtests (19 Android,8 Azure), bukan kompilasi/deploy.
 - Expo compatibility offline dan ekspor bundle Android Hermes: exit0;
@@ -162,3 +164,43 @@ Tidak ada mock yang dijadikan bukti penerimaan Google/Android nyata.
 
 Commit fase penuntasan merujuk baseline di atas; SHA dan hasil CI aktual tersedia
 pada riwayat PR #2. Status ini tidak mengklaim deployment/APK/native acceptance selesai.
+
+## Penuntasan lanjutan — 16 November 2026
+
+Pengguna meminta seluruh pekerjaan dirampungkan. Repository/remote tetap pada baseline
+4841812 sebelum perubahan fase ini; tidak ada perubahan pengguna yang ditimpa.
+android_release_check memiliki manifest/lock serta guard native; backend_release_check
+memiliki backend/tests; koordinator mengintegrasikan workflow, dokumen dan Git.
+Kepemilikan file dikembalikan ke koordinator setelah agent selesai.
+
+- Cacat konkret ditemukan: Expo55 meng-autolink expo-font58.0.12 dari peer transitive,
+  sementara expo install --check tetap up-to-date. Pin eksplisit ~55.0.8 menghapus
+  duplikasi. Fresh npm ci, resolve/search/verify, strict check:native, empat tes guard,
+  typecheck/lint dan68 tes FE lulus. CI frontend dan workflow APK menjalankan guard.
+- Ekspor Hermes1395modul dan evaluasi config --type prebuild lulus. Ini evaluasi
+  konfigurasi/export, bukan native prebuild lengkap atau kompilasi APK.
+- Backend58 passed/1 Google-live skipped; pip check lulus. Tes startup memakai file
+  checkpoint dan lease produksi dengan upstream terkontrol. Test Google opt-in kini
+  memakai factory produksi, checkpoint yang sama saat reopen, dan Sheet test kosong
+  yang berbeda dari configured source. Tes Google belum dijalankan tanpa credential.
+- HTTP7 passed dijalankan ulang; konfigurasi27 passed +7 subtests; preview standalone
+  dibangun ulang exit0. Bundle preview tidak berubah dari file yang telah ditinjau.
+- Akun Vercel masih terbaca, pencarian AppFinance/catat tetap kosong. Tidak mengulang
+  create-project403 tanpa perubahan izin. Browser Vercel mencapai halaman login;
+  belum ada sesi browser Vercel yang terautentikasi.
+- Firebase console tetap login pada project yang benar, Spark dan aplikasi Android
+  terdaftar. Tabel SHA masih kosong. Download google-services.json kembali dicoba
+  melalui kontrol resmi dengan listener download: timeout15detik, tidak ada completed
+  file. Pencarian nama google-services.json di Drive tidak menemukan file.
+- Google Cloud IAM untuk project tetap menampilkan Site Unavailable. Tidak membuat
+  identitas/key atau memperluas permission secara diam-diam. Plugin Firebase tersedia
+  sebagai panduan CLI, tanpa tool pengelolaan IAM dalam sesi ini.
+- gh CLI belum login; Vercel CLI dan credential env tidak ada. Koneksi GitHub yang
+  berhasil push tidak dianggap otomatis memberi credential CLI/Google/hosting.
+- Android preflight --check-backend kembali exit1 karena API URL HTTPS /api/v1 belum
+  tersedia. Compiler/SDK/adb tidak tersedia; emulator dan HP fisik belum diuji.
+
+Hambatan untuk penerimaan nyata tetap: akses tulis/login Vercel untuk preview, host satu
+worker dengan disk persisten atau perubahan arsitektur teruji, credential Google/Sheet
+test + UID owner, config Android/OAuth dan signing. Tidak ada backend deploy, APK,
+instalasi, upgrade billing atau resource berbayar baru yang diklaim berhasil.

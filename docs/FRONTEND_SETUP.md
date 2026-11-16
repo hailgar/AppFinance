@@ -72,6 +72,7 @@ Untuk HP fisik, `localhost` menunjuk HP itu sendiri. Gunakan backend HTTPS yang 
 npm run typecheck
 npm run lint
 npm test
+npm run check:native
 npm run check:expo
 npm run export:android
 ```
@@ -163,6 +164,17 @@ mandiri. Uji login, catat pengeluaran, reload/login ulang, budget, edit/hapus/fi
 error koneksi dan logout. Untuk reminder fisik: izin ditolak, ubah jam, disable,
 background, layar terkunci, offline, reboot, timezone dan logout. Catat model/versi Android
 dan perilaku force-stop/baterai yang diamati. Tes emulator bukan pengganti tes HP fisik.
+
+## Guard versi native Expo
+
+Pemeriksaan autolinking menemukan expo-font58.0.12 sebagai peer transitive pada SDK55,
+meskipun expo install --check melaporkan up-to-date. Manifest kini secara eksplisit
+memakai expo-font~55.0.8 dan lockfile hanya memiliki satu instalasi55.0.8.
+`npm run check:native` memeriksa hasil resolve/search Android terhadap rentang SDK
+terpasang dan menolak mismatch/duplikasi. CI frontend dan workflow APK menjalankan guard
+ini. Empat tes regresi dijalankan dengan
+`node --test scripts/tests/check_expo_native_versions.test.cjs` dari root repository.
+Guard/autolinking tidak menggantikan kompilasi Gradle atau uji perangkat.
 
 Referensi resmi: https://docs.expo.dev/build-reference/apk/ dan
 https://docs.expo.dev/versions/v55.0.0/sdk/notifications/

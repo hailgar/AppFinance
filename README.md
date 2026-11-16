@@ -17,8 +17,8 @@ Reminder dijadwalkan lokal di Android; konfirmasi pengiriman pada HP fisik masih
 
 ## Status yang sudah diverifikasi
 
-- FE: typecheck, lint, 57 tes unit dan ekspor bundle Android lulus.
-- BE: 57 tes lulus dengan `requirements.lock`; 1 tes Firebase/Sheets nyata dilewati.
+- FE: typecheck, lint,68 tes unit,4 tes guard native dan ekspor bundle Android lulus.
+- BE:58 tes lulus dengan `requirements.lock`;1 tes Firebase/Sheets nyata dilewati.
 - Integrasi HTTP: 7 tes klien FE terhadap FastAPI lulus dengan auth/storage khusus tes.
 - Parser kategori FE diperbaiki untuk respons `data.items` dari backend.
 - Workflow GitHub Actions tersedia untuk pemeriksaan FE, BE dan integrasi HTTP.
@@ -51,6 +51,7 @@ Frontend memerlukan Node 24, npm, dan konfigurasi native Firebase untuk dijalank
 ```bash
 cd mobile
 npm ci
+npm run check:native
 npm run typecheck
 npm run lint
 npm test
@@ -81,3 +82,13 @@ Fixture memakai token tiruan dan storage memori; tidak mengakses data Google nya
 
 Simpan `.env`, service-account key dan keystore di luar Git. Backend hanya menerima
 UID Firebase yang diizinkan; tidak ada autentikasi bypass dalam runtime produksi.
+
+## Melihat tampilan
+
+`mobile/preview` merender tujuh layar asli melalui React Native Web. Data contoh
+ditandai permanen; login, Sheets, backend dan notifikasi Android tidak terhubung.
+Jalankan `npm ci --prefix mobile/preview`, lalu
+`npm run build:standalone --prefix mobile/preview` setelah dependency mobile dipasang.
+File `mobile/preview/dist/catat-harian-preview.html` dapat diunduh dari artifact
+Frontend checks. Instruksi dan setting hosting static di
+[README preview](mobile/preview/README.md). Ini bukan APK atau bukti integrasi Google.
