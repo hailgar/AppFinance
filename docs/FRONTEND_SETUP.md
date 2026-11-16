@@ -9,7 +9,7 @@ Google Sheets nyata, atau APK. Dokumen PRD, kontrak, dan OpenAPI BE disertakan d
 
 ## Status yang sebenarnya
 
-Kode menggunakan API nyata, tanpa adapter mock dan tanpa data keuangan contoh. Koneksi backend, login Google pada perangkat, persistensi Sheets, dan APK **belum diverifikasi**. Tidak ada backend, Firebase project, credential, Android SDK/perangkat, atau OpenAPI live yang disediakan pada sesi ini.
+Kode menggunakan API nyata, tanpa adapter mock dan tanpa data keuangan contoh. Koneksi backend, login Google pada perangkat, persistensi Sheets, dan APK **belum diverifikasi**. Firebase project Spark dan aplikasi Android kini terverifikasi di konsol; Google Sign-In Enabled. Belum ada pengguna Firebase, fingerprint signing, backend HTTPS, credential runtime atau Android SDK/perangkat yang bisa dipakai untuk penerimaan. Unduhan konfigurasi Android belum berhasil melalui browser sesi ini.
 
 PRD dan kontrak v0.1 dibaca sebelum implementasi: `01_PRD.md` dan `02_API_DAN_DATA.md` dari proyek. Dokumen sumber tidak diubah. Prompt yang diberikan disertakan dalam `docs/03_PROMPT_FE.md`.
 
@@ -136,13 +136,13 @@ Repository secrets, masukkan lewat mekanisme secret GitHub, bukan chat/source pu
 Register SHA-1 dan SHA-256 sertifikat keystore pada aplikasi Android Firebase, aktifkan
 Google Sign-In, dan unduh ulang google-services.json. Workflow mengekspor fingerprint
 sertifikat tanpa password ke ringkasan build dan memeriksa SHA-1/package/Web client ID
-terhadap config sebelum kompilasi. Keystore yang sama dipakai untuk debug maupun preview
+terhadap config serta health HTTPS backend sebelum kompilasi. Keystore yang sama dipakai untuk debug maupun preview
 agar identitas signing stabil. Jangan memakai private Admin credential untuk build mobile.
 
 Validator lokal (membaca process environment, tidak otomatis membaca file `.env`):
 
 ```bash
-python scripts/android_config.py
+python scripts/android_config.py --check-backend
 ```
 
 Setelah konfigurasi aktual tersedia dan workflow ini sudah masuk default branch lewat review/merge PR, buka Actions → Android internal APK → Run workflow. Pilih development terlebih dahulu untuk pengujian native, lalu preview. GitHub memerlukan file workflow_dispatch pada default branch; setelah terdaftar, branch build dapat dipilih. Artifact hanya tersedia jika Gradle

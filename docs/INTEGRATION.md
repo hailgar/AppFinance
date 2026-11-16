@@ -14,7 +14,9 @@ commit ada di STATUS.md. Tidak ada ZIP lama yang menimpa kode repository.
   pagination, rincian bulanan, onboarding opsional dan reminder lokal tersedia.
 - Token diikat ke UID sesi sebelum/sesudah refresh. Logout memakai pembatalan reminder
   dua tahap: batalkan jadwal dahulu, bersihkan preferensi/recovery setelah sign-out
-  berhasil. Jika sign-out gagal, sesi yang masih aktif dapat memulihkan reminder.
+  berhasil. Jadwal dan notifikasi yang sudah tampil dibersihkan menurut marker/UID;
+  startup signed-out membersihkan orphan sebelum login berikutnya. Jika sign-out
+  gagal, sesi yang masih aktif dapat memulihkan reminder.
 - Views Sheets dibangun otomatis dari ledger tervalidasi saat startup/perubahan;
   retry latar belakang memulihkan View gagal serta append UNKNOWN yang terlambat.
   Receipt finansial tidak dibatalkan oleh kegagalan View. GET /storage/status privat
@@ -25,10 +27,10 @@ commit ada di STATUS.md. Tidak ada ZIP lama yang menimpa kode repository.
 | Pemeriksaan | Hasil |
 |---|---|
 | TypeScript / ESLint FE | Lulus exit0 |
-| Vitest FE | 57 passed, 7 tes HTTP skipped pada mode unit |
+| Vitest FE | 68 passed, 7 tes HTTP skipped pada mode unit |
 | Pytest BE dengan requirements.lock | 57 passed, 1 Google-live skipped |
 | HTTP klien FE → FastAPI aktual | 7 passed, auth/storage khusus tes |
-| Validator konfigurasi Android | 8 passed; fixture validator tidak dipakai build |
+| Validator konfigurasi Android | 19 passed; fixture validator tidak dipakai build |
 | Expo compatibility offline | Exit0, memakai daftar SDK; validasi online tidak diklaim |
 | Ekspor bundle Android Hermes | Exit0; google-services.json belum ada; bukan APK |
 | Syntax Python/YAML/Bash workflow+Compose | Lulus; bukan eksekusi Docker/Gradle |
@@ -71,7 +73,8 @@ cd backend
 python -m pytest tests -q
 ```
 
-Dari root: `python -m pytest scripts/tests -q` memeriksa validator build.
+Dari root: `python -m pytest scripts/tests -q` memeriksa19 tes validator Android
+dan8 tes konfigurasi Azure.
 Tes Google opt-in memerlukan Sheet test terpisah, credential backend dan token aktual;
 lihat BACKEND_SETUP.md. APK/deploy memakai konfigurasi pada FRONTEND_SETUP.md dan
 BACKEND_SETUP.md. Tidak ada biaya/layanan hosting baru yang dibuat otomatis.

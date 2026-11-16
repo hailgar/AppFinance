@@ -38,3 +38,13 @@ Run focused checks in your area and report exact results and remaining blockers.
 - HTTP contract from root with backend Python environment:
   python scripts/test_backend_contract.py backend
 - Live Google/Android tests require actual credentials/device; never substitute mocks as acceptance.
+
+## Completion-phase ownership
+
+- android_finish: Android workflow/signing init and scripts/android_config.py + tests.
+- deploy_finish: deploy/azure/* and scripts/tests/test_azure_deploy.py.
+- integration_reconcile: native reminder adapter and reminder-native tests; later review read-only.
+- Coordinator: session/provider integration, sessionLifecycle helper/tests, Google/hosting
+  access, docs/STATUS.md, final checks and Git/PR. No agent commits independently.
+- Serialize sign-in, complete logout cleanup and signed-out reminder cleanup together:
+  an old session must not delete the new session recovery command.

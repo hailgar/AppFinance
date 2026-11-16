@@ -1,102 +1,98 @@
 # Catat Harian — status implementasi
 
 16 November 2026 (WIB). Koordinator: Integrasi & Pengujian.
-Branch: `feat/complete-mvp-integration`. Baseline main: `be3a811`.
-Draft PR: [#2](https://github.com/hailgar/AppFinance/pull/2). Tip kode dan dokumentasi awal: `8d6bd56`.
-MVP kode terintegrasi dan pemeriksaan otomatis lokal lulus; penerimaan layanan Google
-serta Android nyata masih terhambat konfigurasi/akses. Bukan klaim deployment/APK selesai.
+Branch `feat/complete-mvp-integration`; baseline main `be3a811`.
+Draft PR [#2](https://github.com/hailgar/AppFinance/pull/2). Baseline fase ini `010bd68`.
+Kode MVP terintegrasi; penerimaan Google dan Android nyata belum selesai.
+Belum ada URL backend yang berhasil di-deploy atau APK yang berhasil dibangun.
 
-| Tugas | Penanggung jawab | Dependensi | Status / bukti |
+## Koordinasi dan hasil
+
+| Tugas | Penanggung jawab | Dependensi | Hasil / langkah berikutnya |
 |---|---|---|---|
-| Inspeksi source, aturan AGENTS, integrasi akhir, Git/PR | Koordinator | main aktual | Source repository dibandingkan; tree baseline cocok, perubahan pengguna dipertahankan |
-| Budget default/override, detail/edit/hapus, filter, kategori bulanan | FE agent + audit FE | Kontrak API | Implementasi nyata ke API; revision/UNKNOWN/auth dipertahankan |
-| Ledger, auth, idempotency/revision, laporan Sheets otomatis | BE agent | Google Sheets/Firebase runtime | 57 tes BE lulus;1 tes Google nyata dilewati |
-| Izin, dua jadwal lokal, rekonsiliasi, offline preference, konflik, logout | Reminder agent + agent penerus | expo-notifications55.0.27 |17 tes logika reminder lulus; pengiriman native belum diuji |
-| Sesi UID-bound, konfigurasi URL, onboarding opsional | Koordinator | Firebase native | Typecheck/lint dan tes sesi lulus; izin tidak diminta otomatis |
-| Review kontrak/lifecycle/secret/build | Review agent + audit akhir | Semua perubahan | Temuan timeout/token/logout/import diperbaiki; syntax build/deploy lulus |
-| Login → Sheets → reload/login ulang nyata | Koordinator | Firebase project/UID, credential, Sheet test | Belum dijalankan, konfigurasi tidak tersedia |
-| Deploy HTTPS internal | Koordinator/BE | Host yang sudah tersedia, domain, secrets, persistent volume | Dockerfile+Compose+Caddy disiapkan; Docker/provider akses belum tersedia; tidak ada URL deployment |
-| APK development dan preview | Koordinator | Firebase config, OAuth, signing, toolchain | Workflow manual + validator disiapkan; preflight aktual blocked; tidak ada APK |
-| Emulator | Koordinator | Android SDK/emulator | Tidak tersedia; belum diuji |
-| HP fisik | Koordinator | Perangkat pengujian terhubung | Tidak terhubung; belum diuji |
+| UI keuangan, API, recovery, sesi | FE agent + koordinator | Firebase native/API HTTPS | Budget default/override, tambah/edit/hapus, riwayat/filter, ringkasan dan error/revision/UNKNOWN diimplementasikan; uji perangkat menunggu build |
+| Ledger, auth, aturan keuangan, laporan Sheets | BE agent | Credential Google, Sheet test, UID allowlist | 57 tes BE lulus; 1 Google-live skip. Views otomatis dan retry30detik; kegagalan View tidak membatalkan receipt |
+| Reminder dan logout | Reminder agent + integration_reconcile + koordinator | Native Android | 17 tes controller,8 adapter native,3 serialisasi sesi; cleanup marker/UID, notifikasi tampil dan last response; uji fisik belum berjalan |
+| Build Android | android_finish | Backend HTTPS, Firebase config/OAuth, signing stabil | 19 tes validator lulus; health backend diperiksa sebelum kompilasi; hook signing finalizeDsl; preflight aktual masih blocked |
+| Paket hosting gratis | deploy_finish | Akun/subscription Azure aktif, Google secrets | 8 tes Azure lulus; F1-only, checkpoint file persisten, ZIP aman, batas nama plan diperbaiki; ARM/deploy nyata belum berjalan |
+| Review PR alternatif | integration_reconcile | PR #1 / PR #2 | PR #1 arsitektur alternatif; hanya cleanup native dan tes relevan diport ke PR #2, tidak digabung seluruhnya |
+| Integrasi akhir, Google/provider, Git/PR/status | Koordinator | Akses eksternal | Firebase diperiksa langsung; hasil dan hambatan di bawah; push/CI fase ini dicatat pada PR |
+
+Kepemilikan fase ini: android_finish hanya workflow/signing/validator Android;
+deploy_finish hanya deploy/azure dan tes Azure; integration_reconcile hanya
+reminders/native.ts dan reminder-native.test.ts. Koordinator menangani session,
+provider, helper serialisasi sesi, dokumen dan Git. Tidak ada perubahan pengguna
+atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main langsung.
 
 ## Bukti pemeriksaan
 
-- FE: typecheck/lint exit0;57 tes lulus,7 tes HTTP dilewati dalam mode unit.
-- BE:57 passed/1 skipped pada dependency terkunci; satu warning Starlette/httpx.
-- Integrasi HTTP:7 passed dengan API FastAPI aktual dan auth/storage khusus tes.
-- Validator Android:8 passed; bukan kompilasi atau pengujian APK.
-- Ekspor Android Hermes dan pemeriksaan kompatibilitas SDK offline: exit0.
-- Syntax Python/YAML/Bash, git diff --check dan pemeriksaan pola secret: lulus.
-- CI GitHub pada tip `8d6bd56`: ketiga workflow push dan ketiga workflow pull_request selesai success. Workflow APK manual belum dijalankan; ia membutuhkan secrets aktual dan file dispatch pada default branch.
+- FE: typecheck dan lint exit0; 68 tes unit passed,7 HTTP skipped pada mode unit (HTTP dijalankan terpisah).
+- BE:57 passed/1 Google-live skipped, satu warning deprecation Starlette/httpx.
+- Integrasi HTTP:7 passed dengan klien FE/FastAPI aktual, auth/storage khusus tes.
+- Konfigurasi:27 passed +7 subtests (19 Android,8 Azure), bukan kompilasi/deploy.
+- Expo compatibility offline dan ekspor bundle Android Hermes: exit0;
+  warning google-services.json belum tersedia. Bundle bukan APK.
+- Syntax Python/YAML/Bash agent: lulus; git diff --check lulus.
+- CI baseline `010bd68`: Frontend checks, Backend checks dan FE-BE HTTP integration
+  success. Hasil commit fase ini ditautkan pada PR setelah push; APK manual belum dijalankan.
 
-## Keputusan dan konflik yang diselesaikan
+## Kondisi Google, hosting dan perangkat yang diamati
 
-Keputusan pengguna terbaru: BE harus tersedia melalui hosting; Sheet adalah database
-sekaligus laporan terkini. PRD/API v0.2 menggantikan manual-only View dengan pembaruan
-otomatis dari ledger tervalidasi, retry default30detik, Metadata dan storage/status.
-API keuangan tetap bergantung ledger; View gagal tidak membatalkan receipt APPLIED.
-Tidak ada provider/layanan berbayar baru yang dipilih atau dibuat.
+- Dua Google Sheets native terpisah sudah dibuat: database pribadi dan pengujian;
+  lima tab backend, header-only saat diperiksa, timezone Asia/Jakarta. ID/tautan privat
+  tidak disalin ke repository publik. Belum ada akses identitas backend yang terbukti.
+  Jangan menulis data contoh ke database pribadi.
+- Firebase project `catat-harian-4660f` benar-benar ada pada Spark ($0/bulan).
+  Aplikasi Android `id.catatharian.app` terdaftar; Google Sign-In **Enabled**.
+  Tabel Users belum berisi pengguna dan tabel SHA certificates masih kosong.
+  Ini menggantikan catatan lama yang menyatakan project/provider belum tersedia.
+- Firebase CLI15.36.0 terpasang via npx; login:list melaporkan tidak ada akun CLI
+  terotorisasi. Sesi konsol browser sudah login, tetapi tidak memberi kredensial CLI.
+  Unduh konfigurasi dari dua kontrol resmi konsol tidak menghasilkan completed
+  download; tidak ada google-services.json yang dianggap berhasil diperoleh.
+- Firebase menunjukkan service account Admin SDK bawaan. Private key baru tidak
+  dibuat; identitas backend khusus dengan izin minimum belum dikonfigurasi.
+  Google Cloud IAM menampilkan Site Unavailable pada browser sesi ini.
+- Azure Portal mengarah ke sign-in Microsoft. Belum ada subscription, region F1,
+  ARM what-if, resource atau deployment yang terverifikasi. Template F1 disiapkan
+  sebagai hosting pengujian gratis; tanpa SLA/Always On dan memiliki kuota.
+  Tidak ada akun baru, trial kredit, upgrade Spark atau resource berbayar dibuat.
+- Lokal: java/keytool ada; javac/SDK/adb/emulator/Gradle/az/Docker/gcloud tidak ada.
+  Google runtime credentials, Expo token dan Azure deployment credentials tidak ada.
+- Emulator: tidak tersedia, belum diuji. HP fisik: tidak terhubung, belum diuji.
+  Reminder background/lock-screen/offline/reboot/force-stop/baterai tetap terbuka.
 
-Kepemilikan file dipisahkan lewat AGENTS. Koordinator menyatukan import provider,
-UID-bound token, route, dependency, onboarding, status laporan dan logout dua tahap.
-Tidak ada konflik pengguna yang ditimpa. Tidak ada force-push atau perubahan main langsung.
+## Langkah berikutnya dan hambatan minimum
 
-## Kebutuhan minimum pengguna agar penerimaan dapat dilanjutkan
+1. Login akun Microsoft Azure yang memiliki subscription untuk memastikan F1 tersedia.
+   Hentikan jika harus memakai tier berbayar; jangan membeli resource otomatis.
+2. Selesaikan akses Google Cloud IAM: identitas backend khusus, Sheets API, izin
+   verifikasi revocation Firebase dan Editor hanya pada spreadsheet yang dipakai.
+   Credential disimpan lewat mekanisme secret, bukan chat/source publik. Mulai dari
+   Sheet test; private database baru dipakai setelah penerimaan test.
+3. Ambil konfigurasi Android/Web OAuth aktual, siapkan signing stabil dan daftarkan
+   SHA-1/SHA-256; lakukan Google login nyata agar UID owner diketahui/di-allowlist.
+4. Deploy satu worker HTTPS dengan checkpoint persisten; buktikan API→Sheet test,
+   retry/revision/reload/restart. Konfigurasi variables/secrets build dan daftarkan
+   workflow manual pada default branch melalui review/merge, lalu build development
+   dan preview APK. APK harus benar-benar dihasilkan sebelum diberikan ke pengguna.
+5. Instal/uji jika perangkat tersedia, catat emulator dan HP fisik secara terpisah.
 
-1. Host/provider internal yang sudah tersedia dan akses deployment, domain HTTPS,
-   serta penyimpanan persisten checkpoint. Jika membutuhkan resource berbayar baru,
-   pengguna memilih layanan dan batas biayanya dahulu.
-2. Firebase project, satu UID allowlist, identitas/kredensial BE lewat secret mekanisme
-   yang aman, dan Sheet test terpisah privat yang dibagikan ke identitas BE.
-3. Konfigurasi Android Firebase + Web OAuth client ID dan signing keystore stabil
-   beserta SHA-1/SHA-256 terdaftar. Isi repository variables/secrets sesuai
-   FRONTEND_SETUP.md; jangan mengirim private key/token/password melalui chat.
-4. HP pengujian terhubung (opsional untuk kompilasi, wajib untuk bukti reminder fisik).
-
-## Langkah berikutnya
-
-### Persiapan biaya minimum (16 November 2026 WIB)
-
-- Dua spreadsheet Google Sheets native (database pribadi dan pengujian) dibuat di
-  Drive pengguna. Lima header backend diverifikasi via API, keduanya tanpa data
-  transaksi, zona waktu Asia/Jakarta, dan warning proteksi pada LedgerEvents.
-  Tautan/ID tidak dimasukkan ke repository publik. Belum ada identitas BE yang diberi
-  akses dan belum ada pembacaan/penulisan aplikasi ke Sheet nyata.
-- Firebase Spark dipilih untuk login Google gratis. Pengguna melewati pemasangan
-  plugin. Konsol web yang diperiksa meminta login Google; project, UID, OAuth dan
-  credential backend belum dibuat atau dihubungkan.
-- Kandidat hosting: Azure App Service Linux F1 ($0 dalam batas paket), dengan
-  checkpoint di /home/catat-data. Template, startup dan ZIP packager ada di
-  deploy/azure. F1 memiliki kuota CPU dan tanpa SLA. Tidak ada akun/resource Azure
-  yang dibuat, biaya yang disetujui, atau deployment yang dieksekusi.
-- Render Free tidak dipakai untuk konfigurasi sekarang karena filesystem ephemeral
-  tidak mempertahankan anchor checkpoint. Tidak mengendurkan pemeriksaan integritas.
-- APK mandiri ditargetkan lewat profil preview GitHub Actions runner standar pada
-  repository publik. Preflight sesi ini benar-benar dijalankan dan gagal pada URL
-  API HTTPS yang belum tersedia. SDK Android/javac, Firebase config dan signing
-  juga belum tersedia. Belum ada APK atau uji perangkat.
-- Tes setup Azure: 6 unittest lulus (private credential file, safe errors, project
-  mismatch, durable path, ZIP allowlist, free-only template). Paket ZIP dibuat dan
-  syntax Python diperiksa; validasi ARM oleh Azure dan deploy nyata belum dilakukan.
-
-Branch berisi commit per scope sudah dipush dan draft PR #2 dibuat; tiga CI lulus. Setelah konfigurasi aman tersedia dan workflow build masuk default branch melalui review/merge PR,
-bootstrap Sheet test, deploy satu worker, uji alur Google nyata, build development lalu
-preview APK, instal dan catat pengujian emulator/HP secara terpisah.
+Instruksi teknis: FRONTEND_SETUP.md, BACKEND_SETUP.md dan deploy/azure/README.md.
+Tidak ada mock yang dijadikan bukti penerimaan Google/Android nyata.
 
 ## Commit terkait
 
 | Scope | Commit |
 |---|---|
-| backend | `82192da` |
-| mobile | `af4def1` |
-| reminders | `9e2629e` |
-| delivery | `49ab343` |
+| Backend/laporan otomatis | `82192da` |
+| UI keuangan | `af4def1` |
+| Reminder utama | `9e2629e` |
+| Delivery awal | `49ab343` |
+| Dokumentasi awal | `8d6bd56`, `c7704ac` |
+| Persiapan gratis/Sheets | `010bd68` |
+| Cleanup native/urutan sesi | `9d5731a` |
+| Build/deployment hardening | `c4a3f8f` |
 
-Commit dokumentasi `8d6bd56` menyimpan baseline status. Pembaruan dokumentasi berikutnya merekam PR dan hasil CI tersebut; tidak mengubah kode aplikasi.
-
-## CI pull request yang sudah diamati
-
-- [Frontend checks](https://github.com/hailgar/AppFinance/actions/runs/43773843337): success
-- [Backend checks](https://github.com/hailgar/AppFinance/actions/runs/43773843382): success
-- [FE-BE HTTP integration](https://github.com/hailgar/AppFinance/actions/runs/43773843341): success
+Commit fase penuntasan merujuk baseline di atas; SHA dan hasil CI aktual tersedia
+pada riwayat PR #2. Status ini tidak mengklaim deployment/APK/native acceptance selesai.
