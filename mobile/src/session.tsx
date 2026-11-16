@@ -23,8 +23,10 @@ import {
 } from "./services/auth";
 import { createApi, errorMessage } from "./services/api";
 import { bindTokenSource } from "./services/sessionIdentity";
+import { sessionTransitions } from "./services/sessionLifecycle";
 import { validApiBase } from "./services/config";
 import { Introduction } from "./onboarding/Introduction";
+import { clearOrphanNativeReminders } from "./reminders/native";
 import {
   ReminderProvider,
   stopAccountReminders,
@@ -82,6 +84,15 @@ function Gate({ children }: { children: ReactNode }) {
     [uid, configured],
   );
   useEffect(() => {
+    if (uid === null) {
+      void sessionTransitions.run(clearOrphanNativeReminders).catch(() => {
+        setError(
+          "Pengingat lama belum bisa dibersihkan. Tutup lalu buka kembali aplikasi.",
+        );
+      });
+    }
+  }, [uid]);
+  useEffect(() => {
     let active = true;
     if (session)
       session.vault
@@ -112,7 +123,10 @@ function Gate({ children }: { children: ReactNode }) {
     setBusy(true);
     setError("");
     try {
-      await login();
+      await sessionTransitions.run(async () => {
+        await clearOrphanNativeReminders();
+        await login();
+      });
     } catch {
       setError(
         "Belum bisa masuk. Periksa koneksi dan konfigurasi akun Google.",
@@ -246,18 +260,20 @@ export async function signOutAndClear(
   session: ReturnType<typeof useSession>,
   qc: QueryClient,
 ) {
-  try {
-    await stopAccountReminders(session.uid, false);
-    await qc.cancelQueries();
-    qc.clear();
-    // Keep unresolved recovery data if Firebase sign-out itself fails.
-    await logout();
-    await stopAccountReminders(session.uid, true);
-    await session.vault.clear();
-  } catch (error) {
-    if (auth.currentUser?.uid === session.uid)
-      await resumeAccountReminders(session.uid);
-    throw error;
-  }
+  return sessionTransitions.run(async () => {
+    try {
+      await stopAccountReminders(session.uid, false);
+      await qc.cancelQueries();
+      qc.clear();
+      // Keep unresolved recovery data if Firebase sign-out itself fails.
+      await logout();
+      await stopAccountReminders(session.uid, true);
+      await session.vault.clear();
+    } catch (error) {
+      if (auth.currentUser?.uid === session.uid)
+        await resumeAccountReminders(session.uid);
+      throw error;
+    }
+  });
 }
 export const currentUserName = () => auth.currentUser?.displayName || "Kamu";

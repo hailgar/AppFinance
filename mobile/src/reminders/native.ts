@@ -12,6 +12,11 @@ import {
 
 export const REMINDER_CHANNEL = "daily-reminders";
 const marker = "catat-harian-local-v1";
+function ownsNotification(data: unknown, uid?: string): boolean {
+  if (!data || typeof data !== "object") return false;
+  const value = data as Record<string, unknown>;
+  return value.owner === marker && (uid === undefined || value.uid === uid);
+}
 const storageKey = (uid: string) =>
   "reminders." +
   Array.from(uid)
@@ -129,6 +134,15 @@ export const reminderDevice: ReminderDevice = {
   },
   cancel: (id) => Notifications.cancelScheduledNotificationAsync(id),
   test: async (uid) => {
+    for (const pending of await Notifications.getAllScheduledNotificationsAsync()) {
+      if (
+        ownsNotification(pending.content.data, uid) &&
+        pending.content.data?.kind === "test"
+      )
+        await Notifications.cancelScheduledNotificationAsync(
+          pending.identifier,
+        );
+    }
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Catat Harian",
@@ -150,13 +164,31 @@ export const reminderDevice: ReminderDevice = {
   },
 };
 
+async function clearOwnedNativeNotifications(uid?: string) {
+  for (const item of await Notifications.getAllScheduledNotificationsAsync())
+    if (ownsNotification(item.content.data, uid))
+      await Notifications.cancelScheduledNotificationAsync(item.identifier);
+  for (const item of await Notifications.getPresentedNotificationsAsync())
+    if (ownsNotification(item.request.content.data, uid))
+      await Notifications.dismissNotificationAsync(item.request.identifier);
+  const response = await Notifications.getLastNotificationResponseAsync();
+  if (
+    response &&
+    ownsNotification(response.notification.request.content.data, uid)
+  )
+    await Notifications.clearLastNotificationResponseAsync();
+}
+
+/** Signed-out startup removes this feature's orphaned OS state, preserving saved preferences. */
+export async function clearOrphanNativeReminders() {
+  await clearOwnedNativeNotifications();
+}
+
 /** Fallback cleanup when the account provider is not mounted (e.g. recovery/login gate). */
 export async function clearNativeAccountReminders(
   uid: string,
   clearSaved = true,
 ) {
-  const all = await reminderDevice.scheduled();
-  for (const item of all)
-    if (item.uid === uid) await reminderDevice.cancel(item.id);
+  await clearOwnedNativeNotifications(uid);
   if (clearSaved) await reminderStore(uid).clear();
 }

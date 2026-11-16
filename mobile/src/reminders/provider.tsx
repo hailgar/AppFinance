@@ -129,7 +129,7 @@ export function useReminders() {
 export async function stopAccountReminders(uid: string, clearSaved = true) {
   const controller = controllers.get(uid);
   if (controller) await controller.stop(clearSaved);
-  else await clearNativeAccountReminders(uid, clearSaved);
+  await clearNativeAccountReminders(uid, clearSaved);
 }
 export async function resumeAccountReminders(uid: string) {
   const controller = controllers.get(uid);
