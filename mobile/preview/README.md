@@ -74,10 +74,16 @@ Browser/interaction QA dan deployment dicatat koordinator di `docs/STATUS.md`.
 
 ## Project static Vercel setelah akses tersedia
 
-Gunakan team DOL (`dol3`), project `catat-harian-ui-preview`, repository AppFinance
-dan branch `feat/complete-mvp-integration`. Ini hanya preview UI. Project belum ada;
-percobaan create-project ditolak403. Jangan memindahkan source backend ke Function
-atau mengubah plan untuk mengatasi error izin tersebut.
+Akun browser yang dipilih pengguna sekarang hailgar, team `hailgars-projects` (Hobby),
+berbeda dari koneksi API dol-men/DOL yang menolak create-project403. Target preview
+`catat-harian-ui-preview`. Drop to Deploy satu index.html dari build teruji sudah
+menjadi flow publikasi tertunda karena verifikasi email ditolak invalid or expired.
+Belum ada READY/URL terverifikasi; periksa flow tersebut sebelum membuat duplikat.
+Ini hanya UI fixture, bukan backend. Jangan mengubah plan untuk mengatasi error izin.
+
+Untuk Git integration selanjutnya, repository AppFinance dan branch
+`feat/complete-mvp-integration` memerlukan setting berikut. Drop upload saat ini tidak
+menghubungkan Git atau menjanjikan auto-deploy:
 
 | Pengaturan project | Nilai |
 |---|---|

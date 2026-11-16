@@ -277,3 +277,9 @@ Referensi resmi:
 - https://vercel.com/docs/vercel-blob/private-storage
 - https://vercel.com/daemons
 - https://vercel.com/blog/introducing-vercel-drives-persistent-storage-for-agents
+
+Pembaruan akses browser: pengguna menyelesaikan login Vercel sebagai hailgar pada team
+hailgars-projects (Hobby), berbeda dari koneksi API DOL. Upload static UI sedang tertunda
+pada verifikasi email yang ditolak invalid or expired. Tidak ada backend yang dideploy
+atau checkpoint/lease yang diubah untuk memaksakan Functions. Flow UI bukan provisioning
+identitas Google, host FastAPI atau deployment backend yang siap menerima data nyata.

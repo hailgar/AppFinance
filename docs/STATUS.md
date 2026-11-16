@@ -161,6 +161,8 @@ Tidak ada mock yang dijadikan bukti penerimaan Google/Android nyata.
 | Persiapan gratis/Sheets | `010bd68` |
 | Cleanup native/urutan sesi | `9d5731a` |
 | Build/deployment hardening | `c4a3f8f` |
+| Pratinjau UI browser | `4841812` |
+| Native compatibility/startup factory | `cfecc92` |
 
 Commit fase penuntasan merujuk baseline di atas; SHA dan hasil CI aktual tersedia
 pada riwayat PR #2. Status ini tidak mengklaim deployment/APK/native acceptance selesai.
@@ -204,3 +206,32 @@ Hambatan untuk penerimaan nyata tetap: akses tulis/login Vercel untuk preview, h
 worker dengan disk persisten atau perubahan arsitektur teruji, credential Google/Sheet
 test + UID owner, config Android/OAuth dan signing. Tidak ada backend deploy, APK,
 instalasi, upgrade billing atau resource berbayar baru yang diklaim berhasil.
+
+## Login Vercel dan percobaan publikasi lanjutan
+
+Kode perbaikan native/startup sudah di-push sebagai cfecc92. CI pada commit itu lulus:
+Frontend43818053902, Backend43818053909, HTTP43818053873 (PR); juga ketiga push run lulus.
+
+Form autentikasi aman dipakai untuk login Vercel. Browser sekarang terverifikasi
+sebagai hailgar, team hailgar's projects / hailgars-projects, Hobby. Ini akun berbeda
+dari koneksi API dol-men/DOL. Tidak menganggap error403 DOL sudah diperbaiki; browser
+memakai akun pemilik yang dipilih pengguna dalam flow login, bukan token koneksi lama.
+
+Pratinjau standalone491364bytes yang sama dengan build teruji cfecc92 diunggah sebagai
+index.html melalui Drop to Deploy. Form menampilkan satu file, team Hobby hailgar,
+project catat-harian-ui-preview. Deploy ditekan sesuai izin publikasi internal pengguna.
+Tidak ada Git integration, secret backend, config Firebase atau data keuangan nyata
+pada unggahan ini. Ini static UI, bukan backend/APK; tidak menjanjikan auto-deploy Git.
+
+Vercel kemudian meminta verifikasi identitas email. Send Code diklik, pengguna mengisi
+melalui form aman. Website menolak dengan invalid or expired. Tidak menyalin kode ke
+source/log, tidak mencoba ulang/resend otomatis atau menganggap verifikasi berhasil.
+Project/deployment READY dan URL publik belum terverifikasi. Halaman masih pada
+Publishing dengan dialog verifikasi; jangan membuat project duplikat sebelum memeriksa
+hasil flow yang tertunda. Pengerjaan browser berikutnya memerlukan pengguna melanjutkan
+verifikasi tersebut, kemudian koordinator memeriksa hasil dan URL aktual.
+
+Sesudah verifikasi, tugas independen yang tetap memblokir penerimaan lengkap adalah
+Google Cloud IAM/credential backend dan izin Sheet test, UID owner serta OAuth/signing
+Android, dan host FastAPI satu penulis dengan disk persisten. Login Vercel tidak
+menyediakan credential Google atau mengubah asumsi runtime Functions.

@@ -97,3 +97,11 @@ CI frontend kini membangun preview standalone setelah pemeriksaan aplikasi utama
   exit0 dan bytes tetap sama dengan preview yang sebelumnya ditinjau di browser.
 - Runtime Android preflight exit1 (API URL belum diisi). Firebase download timeout15s;
   IAM Site Unavailable; Vercel browser login wall. Tidak ada Gradle/deploy/HP proof.
+
+Verifikasi eksternal lanjutan: login Vercel melalui form aman berhasil, browser menampilkan
+hailgar / hailgars-projects / Hobby. Unggah satu index.html491364bytes melalui Drop to
+Deploy dan submit project catat-harian-ui-preview dilakukan. Vercel meminta verifikasi
+email; kode via form aman ditolak invalid or expired. Tidak ada status READY/URL yang
+terverifikasi; proses publikasi belum selesai. Tidak ada resend otomatis atau kode yang
+disimpan. Akun ini berbeda dari koneksi API DOL; error403 koneksi lama tetap berlaku.
+CI cfecc92: frontend43818053902, backend43818053909, HTTP43818053873 semuanya success.
