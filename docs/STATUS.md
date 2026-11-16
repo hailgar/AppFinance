@@ -71,6 +71,25 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
 - Emulator: tidak tersedia, belum diuji. HP fisik: tidak terhubung, belum diuji.
   Reminder background/lock-screen/offline/reboot/force-stop/baterai tetap terbuka.
 
+## Penilaian Vercel
+
+Pengguna meminta pemeriksaan Vercel pada 16 November 2026 WIB. FastAPI didukung
+provider, tetapi backend saat ini belum dapat langsung dinyatakan aman pada Functions:
+checkpoint file, lease lokal/satu writer, serta retry lifespan30detik masih bergantung
+pada model host persisten. Blob privat + conditional writes hanya kandidat bagian
+solusi, bukan implementasi koordinasi writer yang sudah diuji. Entrypoint factory dan
+mekanisme credential runtime juga perlu disesuaikan. Detail di BACKEND_SETUP.md.
+
+Enam tes integritas/proyeksi lulus; simulasi filesystem instance terpisah menunjukkan
+anchor/kunci lokal tidak dibagi. Pemeriksaan ini menggunakan fixtures, bukan cloud.
+Integrasi Vercel tersedia namun belum terpasang/terhubung saat diperiksa; akun, project,
+plan dan storage pengguna belum dibaca. Belum ada deployment, upgrade atau resource
+berbayar. Setelah koneksi tersedia, periksa akun aktual sebelum memilih rancangan.
+
+Laporan CLI pengguna menunjukkan autentikasi Microsoft lolos tetapi No subscriptions
+found; belum ada subscription Azure yang dapat diakses. Mengulang login bukan solusi
+provisioning. Aktivasi billing/resource berbayar baru tetap memerlukan keputusan pengguna.
+
 ## Langkah berikutnya dan hambatan minimum
 
 1. Selesaikan akses Azure melalui sesi baru/metode yang dipilih pengguna, atau

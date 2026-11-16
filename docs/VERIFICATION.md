@@ -34,3 +34,11 @@ backend diperiksa sebelum build; signing menggunakan androidComponents.finalizeD
 Paket Azure menolak overwrite/symlink sumber, path checkpoint bukan file, serta nama
 plan yang melampaui batas. Unit loader Python tanpa pytest sempat gagal; seluruh
 27 tes kemudian dijalankan ulang dengan pytest pada virtual environment backend dan lulus.
+
+
+Penilaian Vercel16November2026: enam tes checkpoint/integritas dan proyeksi dijalankan
+ulang dan lulus. Simulasi instance dengan direktori terpisah memperlihatkan anchor
+lokal tidak ikut terbawa dan lease file lokal tidak mengoordinasi instance lain.
+Ini pemeriksaan asumsi runtime dengan fixture, bukan tes deployment Vercel. Hasil dan
+syarat migrasi dicatat di BACKEND_SETUP.md; belum ada konfigurasi runtime produksi
+Vercel atau resource baru yang diterapkan.

@@ -1,7 +1,8 @@
 > Pemeriksaan FE–BE terbaru: lihat [INTEGRATION.md](INTEGRATION.md).
 
-> Hosting gratis untuk uji internal: [Azure App Service F1](../deploy/azure/README.md).
-> Template menjaga satu worker dan checkpoint persisten. Deployment belum dijalankan.
+> Persiapan Azure App Service F1 tersedia di [panduan deployment](../deploy/azure/README.md);
+> login pengguna belum menemukan subscription yang dapat diakses. Penilaian Vercel
+> ada di bagian akhir dokumen ini. Belum ada deployment yang berhasil.
 
 # Catat Harian — Backend & Google Sheets v0.1
 
@@ -219,3 +220,55 @@ akun yang diizinkan, View+Metadata, restart, dan baca ulang; gunakan Sheet test 
 Belum ada URL deployment atau bukti pemeriksaan ini dalam sesi sekarang.
 
 Referensi resmi: https://caddyserver.com/docs/quick-starts/reverse-proxy
+
+
+## Penilaian Vercel — 16 November 2026 WIB
+
+Pengguna meminta pemeriksaan Vercel karena sudah menggunakan provider tersebut.
+Dokumentasi resmi mendukung FastAPI/Python sebagai Vercel Function. Dukungan framework
+belum berarti backend ini memenuhi model eksekusinya. Belum ada deployment Vercel,
+resource storage, upgrade plan atau secret baru yang dibuat pada pemeriksaan ini.
+
+| Bagian | Source sekarang | Dampak pada Vercel / tindak lanjut |
+|---|---|---|
+| Entrypoint | app/main.py mengekspor factory create_app, belum instance app ASGI | Siapkan entrypoint setelah runtime aman; jangan deploy factory sebagai instance |
+| Checkpoint | repositories/checkpoint.py memakai file atomik/fsync/replace | Filesystem Function read-only selain /tmp; file sementara tidak menggantikan anchor durable lintas instance/deployment |
+| Writer | ProcessLease berbasis flock/msvcrt lokal dan LedgerService RLock | Satu Function dapat memiliki banyak instance. Perlu koordinasi penulisan lintas instance yang terbukti aman, atau deployment penulis tunggal terpisah |
+| Laporan | Lifespan task retry default30detik dan state manager dalam memori | Tidak boleh menganggap loop akan hidup ketika tidak ada invocation. Perlu pekerjaan durable/terjadwal dengan perilaku retry yang setara |
+| Google credential | Path certificate atau ADC; file di luar repo | Perlu mekanisme secret runtime dan identitas Google berizin minimum; jangan menaruh JSON key di source/build output |
+| Rate limit | Window per IP di memori proses | Bukan limiter global saat ada beberapa instance; tinjau batas platform/koordinasi |
+
+Blob privat tersedia pada Hobby dengan kuota penggunaan; conditional write ifMatch
+memungkinkan pemeriksaan ETag. Ini kandidat penyimpanan checkpoint, bukan bukti bahwa
+lease, fencing, append UNKNOWN, monotonisitas anchor dan urutan proyeksi sudah aman.
+Hobby Blob berhenti dapat diakses saat kuota terlampaui; quota failure harus menjadi
+error terkontrol, bukan sukses finansial palsu. Jangan menghapus lease/checkpoint atau
+mengandalkan /tmp agar health terlihat lulus. Google Sheets tetap sumber ledger;
+penambahan penyimpanan pendukung perlu rancangan dan pengujian yang jelas.
+
+Daemons saat diperiksa tidak menyediakan filesystem persisten atau inbound HTTP;
+bukan pengganti langsung API satu worker ini. Drives ditujukan untuk Sandbox, sehingga
+bukan disk persisten yang otomatis terpasang ke Function aplikasi.
+
+Bukti lokal khusus penilaian (test adapters, bukan runtime Vercel/Google):
+
+- pytest tests/test_ledger.py::test_snapshot_corruption_and_reordered_source
+  tests/test_projections.py -q: 6 passed, 1 warning Starlette/httpx.
+- Simulasi dua direktori instance: anchor lama mendeteksi truncation; direktori baru
+  belum mempunyai anchor; kedua lease lokal dapat diperoleh bersamaan. Ini menunjukkan
+  mengapa memindahkan path ke /tmp tidak memenuhi jaminan durable/single writer.
+- Tidak ada tes Firebase/Sheets nyata, kompilasi APK atau deployment yang dijalankan.
+
+Akses akun: integrasi Vercel ditemukan tersedia tetapi belum terpasang/terhubung ketika
+pemeriksaan dilakukan. Pengguna diminta menghubungkannya untuk memeriksa team/project,
+plan, region, kuota dan storage aktual. Kondisi akun tidak diasumsikan dari dokumentasi.
+
+Referensi resmi:
+
+- https://vercel.com/docs/frameworks/backend/fastapi
+- https://vercel.com/docs/functions/runtimes
+- https://vercel.com/docs/vercel-blob
+- https://vercel.com/docs/vercel-blob/usage-and-pricing
+- https://vercel.com/docs/vercel-blob/private-storage
+- https://vercel.com/daemons
+- https://vercel.com/blog/introducing-vercel-drives-persistent-storage-for-agents
