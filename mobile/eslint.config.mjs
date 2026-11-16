@@ -1,2 +1,2 @@
 import expo from "eslint-config-expo/flat.js";
-export default [...expo, { ignores: ["dist/**"] }];
+export default [...expo, { ignores: ["dist/**", "preview/**"] }];

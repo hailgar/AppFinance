@@ -16,6 +16,7 @@ Belum ada URL backend yang berhasil di-deploy atau APK yang berhasil dibangun.
 | Build Android | android_finish | Backend HTTPS, Firebase config/OAuth, signing stabil | 19 tes validator lulus; health backend diperiksa sebelum kompilasi; hook signing finalizeDsl; preflight aktual masih blocked |
 | Paket hosting gratis | deploy_finish | Akun/subscription Azure aktif, Google secrets | 8 tes Azure lulus; F1-only, checkpoint file persisten, ZIP aman, batas nama plan diperbaiki; ARM/deploy nyata belum berjalan |
 | Review PR alternatif | integration_reconcile | PR #1 / PR #2 | PR #1 arsitektur alternatif; hanya cleanup native dan tes relevan diport ke PR #2, tidak digabung seluruhnya |
+| Pratinjau visual browser | Koordinator (source awal ui_preview) | Dependency preview terisolasi | Tujuh layar asli, data contoh di memori; build standalone dan browser QA berhasil; tidak membuktikan Google/native |
 | Integrasi akhir, Google/provider, Git/PR/status | Koordinator | Akses eksternal | Firebase diperiksa langsung; hasil dan hambatan di bawah; push/CI fase ini dicatat pada PR |
 
 Kepemilikan fase ini: android_finish hanya workflow/signing/validator Android;
@@ -82,9 +83,42 @@ mekanisme credential runtime juga perlu disesuaikan. Detail di BACKEND_SETUP.md.
 
 Enam tes integritas/proyeksi lulus; simulasi filesystem instance terpisah menunjukkan
 anchor/kunci lokal tidak dibagi. Pemeriksaan ini menggunakan fixtures, bukan cloud.
-Integrasi Vercel tersedia namun belum terpasang/terhubung saat diperiksa; akun, project,
-plan dan storage pengguna belum dibaca. Belum ada deployment, upgrade atau resource
-berbayar. Setelah koneksi tersedia, periksa akun aktual sebelum memilih rancangan.
+Pembaruan koneksi: plugin Vercel sudah terhubung. Akun `dol-men` dapat dibaca,
+plan akun Hobby active, team DOL (`dol3`). Query project dengan repository AppFinance
+serta pencarian nama catat tidak menemukan project yang sesuai. Detail team billing
+atau kuota penggunaan tidak terverifikasi dari respons yang tersedia.
+
+Pembuatan project static `catat-harian-ui-preview` pada team DOL ditolak API dengan
+403 forbidden: "You don't have permission to create the project." Tidak ada project
+atau deployment yang berhasil dibuat. CLI Vercel tidak tersedia sebagai fallback
+terautentikasi. Tidak mengulang request yang sama, mengganti team, menaikkan plan,
+atau memakai create-deployment untuk melewati penolakan izin.
+
+Pratinjau UI mandiri dibuat di `mobile/preview`, memakai tujuh layar/komponen produksi
+melalui alias khusus browser. Login, command/storage, laporan dan reminder berupa
+fixtures; banner permanen menandainya. Tidak ada data keuangan asli/secret di bundle.
+Source awal ui_preview selesai tersedia; agent berhenti karena batas penggunaan,
+koordinator menyelesaikan build, browser QA, dokumentasi dan Git. Dependency/build
+preview terpisah dari native, CI menambahkan build standalone.
+
+Bukti aktual fase ini:
+
+- `npm ci` pada preview exit0; `npm run build:standalone` exit0 (432 modules).
+  Output HTML inline sekitar491KB, tidak membutuhkan file JS/CSS terpisah.
+- Root mobile typecheck/lint exit0;68 unit passed/7 HTTP skipped pada mode unit.
+- Browser Chrome: tujuh layar dimuat, input/category/form save bekerja pada fixtures;
+  tambah Rp12.000 mengubah sisa Rp65.000 menjadi Rp53.000; pemasukan tetap Rp200.000.
+  Budget override Rp0, filter pemasukan, ringkasan dan pengaturan diperiksa.
+- Tes notifikasi browser menampilkan pesan tidak dijadwalkan, bukan sukses native.
+- Lebar phone360/430 diperiksa (scrollWidth sama clientWidth);390 tampak pada capture.
+  Tidak berarti responsive/native QA lengkap. Screenshot tersimpan sebagai bukti sesi.
+- Reload/reset mengembalikan fixtures; HTML standalone berhasil dimuat dan validasi
+  desimal dicoba di Chrome. Detail bukti di VERIFICATION.md.
+- Android preflight `python scripts/android_config.py --check-backend` benar-benar
+  dijalankan dan exit1: EXPO_PUBLIC_API_BASE_URL wajib HTTPS berakhiran /api/v1.
+  Tidak ada APK atau hasil instalasi yang dianggap berhasil.
+
+Tidak ada resource berbayar, deployment backend atau penerimaan Google nyata baru.
 
 Laporan CLI pengguna menunjukkan autentikasi Microsoft lolos tetapi No subscriptions
 found; belum ada subscription Azure yang dapat diakses. Mengulang login bukan solusi
@@ -92,10 +126,12 @@ provisioning. Aktivasi billing/resource berbayar baru tetap memerlukan keputusan
 
 ## Langkah berikutnya dan hambatan minimum
 
-1. Selesaikan akses Azure melalui sesi baru/metode yang dipilih pengguna, atau
-   Azure CLI lokal dengan device code sesuai deploy/azure/README.md; login lokal
-   tidak memberi akses ke browser/workspace ini. Verifikasi subscription/F1 dahulu.
-   Hentikan jika harus memakai tier berbayar; jangan membeli resource otomatis.
+1. Untuk URL pratinjau Vercel, sediakan project static pada team DOL dan akses tulis
+   koneksi yang sesuai; request create-project saat ini403. Tidak perlu mengulang
+   koneksi yang sudah terhubung tanpa mengetahui perubahan izin yang diperlukan.
+   Untuk backend, tentukan host satu worker dengan disk persisten atau rancangan
+   koordinasi durable yang diuji sebelum memakai Functions. Azure belum memiliki
+   subscription; jangan membuat resource berbayar otomatis.
 2. Selesaikan akses Google Cloud IAM: identitas backend khusus, Sheets API, izin
    verifikasi revocation Firebase dan Editor hanya pada spreadsheet yang dipakai.
    Credential disimpan lewat mekanisme secret, bukan chat/source publik. Mulai dari

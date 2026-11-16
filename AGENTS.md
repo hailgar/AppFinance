@@ -48,3 +48,9 @@ Run focused checks in your area and report exact results and remaining blockers.
   access, docs/STATUS.md, final checks and Git/PR. No agent commits independently.
 - Serialize sign-in, complete logout cleanup and signed-out reminder cleanup together:
   an old session must not delete the new session recovery command.
+
+## Browser preview ownership
+
+- Coordinator owns mobile/preview, its isolated fixture adapters/build, and related CI.
+- Reuse production screens without changing native authentication or API behavior for a demo.
+- Mark fixture data permanently; browser QA never substitutes Google/native acceptance.

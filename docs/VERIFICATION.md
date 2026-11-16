@@ -42,3 +42,38 @@ lokal tidak ikut terbawa dan lease file lokal tidak mengoordinasi instance lain.
 Ini pemeriksaan asumsi runtime dengan fixture, bukan tes deployment Vercel. Hasil dan
 syarat migrasi dicatat di BACKEND_SETUP.md; belum ada konfigurasi runtime produksi
 Vercel atau resource baru yang diterapkan.
+
+## Pratinjau visual dan kesiapan Vercel
+
+Plugin Vercel sudah terhubung dan akun/team dapat dibaca. Akun dol-men melaporkan
+Hobby active; team DOL (dol3). Filter repository AppFinance dan nama catat tidak
+menemukan project yang sesuai. Create-project static catat-harian-ui-preview
+ditolak403 forbidden (tidak memiliki izin membuat project). Tidak ada URL deployment.
+CLI Vercel terautentikasi tidak tersedia. Tidak ada bypass izin atau resource berbayar.
+
+Pemeriksaan yang benar-benar dijalankan untuk mobile/preview:
+
+- npm ci exit0, npm run build:standalone exit0;432 modules, HTML inline491364bytes.
+- mobile typecheck/lint exit0; npm test68 passed/7 HTTP skipped pada mode unit.
+- Chrome memuat tujuh layar asli melalui React Native Web dengan fixture adapters.
+  Transaksi Rp12.000 mengubah pengeluaran Rp35.000→Rp47.000 dan sisa Rp65.000→Rp53.000;
+  pemasukan tetap Rp200.000. Feedback menyatakan perubahan hanya pada data contoh.
+- Form tanpa kategori menonaktifkan Simpan. Nominal1.5 ditolak dengan pesan rupiah
+  bulat. Override budget Rp0 tampil benar pada layar budget.
+- Filter pemasukan menampilkan hanya satu contoh pemasukan. Ringkasan setelah mutasi:
+  pengeluaran Rp112.000, pemasukan Rp200.000, selisih Rp88.000.
+- Detail transaksi, pengaturan dan tombol tes reminder diperiksa. Tombol tes melaporkan
+  Android tidak dijadwalkan, tidak menunjukkan sukses notifikasi OS.
+- Lebar360/390/430 pada frame browser: scrollWidth sama clientWidth. Screenshot
+  beranda/ringkasan diperiksa; ini bukan bukti emulator, HP atau aksesibilitas native.
+- Reload mengembalikan sisa Rp65.000 dan menghapus perubahan contoh. Reset kembali ke
+  beranda. HTML standalone dilayani melalui preview lokal yang sama dan dimuat dengan
+  benar; validasi desimal serta reset juga dicoba pada file standalone tersebut.
+  Pembukaan file melalui file:// oleh pengguna belum diuji dalam browser sesi ini.
+- Log console yang tersedia tidak memuat error aplikasi; error extension browser
+  dikecualikan. Tidak menganggap hasil ini sebagai pemeriksaan jaringan menyeluruh.
+- Android preflight dengan --check-backend exit1: API URL HTTPS /api/v1 belum tersedia.
+
+Preview memakai fixtures untuk sesi, command, storage, laporan dan reminder. Belum
+ada login Google, penulisan Sheets nyata, pengiriman native atau APK dalam fase ini.
+CI frontend kini membangun preview standalone setelah pemeriksaan aplikasi utama.

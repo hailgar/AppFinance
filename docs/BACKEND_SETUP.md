@@ -259,9 +259,14 @@ Bukti lokal khusus penilaian (test adapters, bukan runtime Vercel/Google):
   mengapa memindahkan path ke /tmp tidak memenuhi jaminan durable/single writer.
 - Tidak ada tes Firebase/Sheets nyata, kompilasi APK atau deployment yang dijalankan.
 
-Akses akun: integrasi Vercel ditemukan tersedia tetapi belum terpasang/terhubung ketika
-pemeriksaan dilakukan. Pengguna diminta menghubungkannya untuk memeriksa team/project,
-plan, region, kuota dan storage aktual. Kondisi akun tidak diasumsikan dari dokumentasi.
+Akses akun terbaru: plugin sudah terhubung; akun dol-men (Hobby active), team DOL
+(dol3) terbaca. Tidak ada project sesuai hasil filter repository AppFinance/nama catat.
+Percobaan create-project static catat-harian-ui-preview ditolak403 forbidden:
+"You don't have permission to create the project." Project/deployment tidak dibuat;
+CLI Vercel terautentikasi juga tidak tersedia. Izin tulis/project perlu diselesaikan
+sebelum URL preview dapat disediakan. Billing/kuota team tidak dianggap terverifikasi.
+Koneksi berhasil dibaca tidak berarti izin membuat project tersedia. Preview browser
+mandiri di mobile/preview hanya memakai fixtures, tidak menjalankan backend di Vercel.
 
 Referensi resmi:
 
