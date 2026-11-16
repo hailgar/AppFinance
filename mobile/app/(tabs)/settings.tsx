@@ -14,8 +14,11 @@ import {
   Field,
   Label,
   Screen,
-  Title,
+  ScreenHeading,
+  SectionHeading,
+  TextButton,
 } from "../../src/components/ui";
+import { theme as t } from "../../src/theme";
 import { useReminders } from "../../src/reminders/provider";
 import {
   reminderKinds,
@@ -47,6 +50,7 @@ export default function Settings() {
     network.isConnected === true && network.isInternetReachable !== false;
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [editingTime, setEditingTime] = useState<ReminderKind | null>(null);
   const [times, setTimes] = useState({
     budget_reminder: state.preferences.budget_reminder.time,
     record_reminder: state.preferences.record_reminder.time,
@@ -86,14 +90,14 @@ export default function Settings() {
   }
   return (
     <Screen>
-      <Title>Pengaturan</Title>
+      <ScreenHeading title="Pengaturan" subtitle="Sesuai kebiasaanmu" />
       <Card>
         <Label>{currentUserName()}</Label>
         <Label muted>Mata uang rupiah · pembukuan WIB</Label>
         <Label muted>Jam mengikuti perangkat; pembukuan memakai WIB.</Label>
       </Card>
       <Card>
-        <Title>Laporan Google Sheets</Title>
+        <SectionHeading>Laporan Google Sheets</SectionHeading>
         <Label>
           {storage.isPending
             ? "Memeriksa pembaruan laporan…"
@@ -113,7 +117,7 @@ export default function Settings() {
         />
       </Card>
       <Card>
-        <Title>Pengingat harian</Title>
+        <SectionHeading>Pengingat harian</SectionHeading>
         <Label muted>
           Pengingat tetap dikirim meskipun kamu sudah mencatat transaksi.
         </Label>
@@ -143,7 +147,15 @@ export default function Settings() {
         )}
         {!state.ready && <Label>Memuat pengaturan perangkat…</Label>}
         {reminderKinds.map((kind) => (
-          <View key={kind} style={{ gap: 12 }}>
+          <View
+            key={kind}
+            style={{
+              gap: 12,
+              paddingVertical: 16,
+              borderBottomWidth: 1,
+              borderColor: t.color.line,
+            }}
+          >
             <View
               style={{
                 minHeight: 48,
@@ -155,8 +167,18 @@ export default function Settings() {
             >
               <View style={{ flex: 1 }}>
                 <Label>{names[kind]}</Label>
+                <TextButton
+                  title={state.preferences[kind].time + " · Ubah jam"}
+                  icon="time-outline"
+                  onPress={() =>
+                    setEditingTime((current) =>
+                      current === kind ? null : kind,
+                    )
+                  }
+                />
               </View>
               <Switch
+                trackColor={{ false: t.color.line, true: t.color.action }}
                 accessibilityLabel={names[kind]}
                 value={state.preferences[kind].enabled}
                 disabled={
@@ -165,26 +187,30 @@ export default function Settings() {
                 onValueChange={(enabled) => change(kind, enabled)}
               />
             </View>
-            <Field
-              label={`Jam ${names[kind].toLowerCase()} (HH:mm)`}
-              value={times[kind]}
-              maxLength={5}
-              autoCapitalize="none"
-              editable={
-                !busy && state.ready && !state.pending && !state.conflict
-              }
-              onChangeText={(value) =>
-                setTimes((current) => ({ ...current, [kind]: value }))
-              }
-            />
-            <Button
-              title="Simpan jam"
-              secondary
-              disabled={
-                busy || !state.ready || !!state.pending || !!state.conflict
-              }
-              onPress={() => change(kind, state.preferences[kind].enabled)}
-            />
+            {editingTime === kind && (
+              <>
+                <Field
+                  label={`Jam ${names[kind].toLowerCase()} (HH:mm)`}
+                  value={times[kind]}
+                  maxLength={5}
+                  autoCapitalize="none"
+                  editable={
+                    !busy && state.ready && !state.pending && !state.conflict
+                  }
+                  onChangeText={(value) =>
+                    setTimes((current) => ({ ...current, [kind]: value }))
+                  }
+                />
+                <Button
+                  title="Simpan jam"
+                  secondary
+                  disabled={
+                    busy || !state.ready || !!state.pending || !!state.conflict
+                  }
+                  onPress={() => change(kind, state.preferences[kind].enabled)}
+                />
+              </>
+            )}
             <Label muted>
               {state.preferences[kind].enabled
                 ? state.active[kind]

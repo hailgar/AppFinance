@@ -26,6 +26,10 @@ export default defineConfig({
   ],
   resolve: {
     alias: [
+      {
+        find: /^@expo\/vector-icons\/Ionicons$/,
+        replacement: stub("icons.jsx"),
+      },
       { find: /^react-native$/, replacement: stub("native.jsx") },
       {
         find: /^react-native-web$/,
@@ -56,5 +60,5 @@ export default defineConfig({
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   esbuild: { jsx: "automatic" },
-  build: { outDir: "dist", sourcemap: false },
+  build: { outDir: "dist", sourcemap: false, assetsInlineLimit: 1024 * 1024 },
 });

@@ -20,6 +20,9 @@ import {
   Button,
   Card,
   Field,
+  AmountField,
+  ScreenHeading,
+  SegmentedControl,
   Label,
   Loading,
   Problem,
@@ -110,11 +113,10 @@ function Editor({
       </Card>
       {editable && (
         <>
-          <Field
+          <AmountField
             label="Budget rupiah (boleh Rp0)"
             value={amount}
             onChangeText={setAmount}
-            keyboardType="number-pad"
             error={validation || undefined}
           />
           <Label muted>
@@ -201,22 +203,22 @@ export default function Budget() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <Screen>
-        <Title>Atur budget</Title>
+        <ScreenHeading
+          title="Tetapkan batas harianmu."
+          subtitle="Budget yang mengikuti kebutuhanmu"
+        />
         <Label muted>
           Budget bukan saldo rekening. Pemasukan tidak menambah budget secara
           otomatis.
         </Label>
-        <Button
-          title={(mode === "OVERRIDE" ? "✓ " : "") + "Khusus tanggal"}
-          secondary={mode !== "OVERRIDE"}
+        <SegmentedControl
+          value={mode}
+          options={[
+            { value: "OVERRIDE", label: "Khusus tanggal" },
+            { value: "DEFAULT", label: "Default harian" },
+          ]}
           disabled={locked}
-          onPress={() => changeMode("OVERRIDE")}
-        />
-        <Button
-          title={(mode === "DEFAULT" ? "✓ " : "") + "Default harian"}
-          secondary={mode !== "DEFAULT"}
-          disabled={locked}
-          onPress={() => changeMode("DEFAULT")}
+          onChange={changeMode}
         />
         <Field
           label={

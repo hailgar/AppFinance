@@ -1,3 +1,4 @@
+import Icon from "./icons";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,10 +34,10 @@ const titles = {
   "/budget": "Atur budget",
 };
 const tabs = [
-  ["/", "Hari Ini", "☀"],
-  ["/history", "Riwayat", "◷"],
-  ["/summary", "Ringkasan", "▥"],
-  ["/settings", "Pengaturan", "⚙"],
+  ["/", "Hari Ini", "home-outline"],
+  ["/history", "Riwayat", "time-outline"],
+  ["/summary", "Ringkasan", "bar-chart-outline"],
+  ["/settings", "Pengaturan", "options-outline"],
 ];
 function App() {
   const route = usePreviewRoute(),
@@ -109,34 +110,40 @@ function App() {
           style={{ "--phone-width": `${width}px` }}
           aria-label="Pratinjau layar aplikasi"
         >
-          <header className="app-header">
-            {route.pathname !== "/" && (
-              <button aria-label="Kembali" onClick={() => router.back()}>
-                ‹
-              </button>
-            )}
-            <span>Catat Harian</span>
-            <span className="sample-tag">CONTOH</span>
-          </header>
+          {!tabs.some(([path]) => path === route.pathname) && (
+            <header className="app-header">
+              {route.pathname !== "/" && (
+                <button aria-label="Kembali" onClick={() => router.back()}>
+                  ‹
+                </button>
+              )}
+              <span>{titles[route.pathname]}</span>
+              <span className="sample-tag">CONTOH</span>
+            </header>
+          )}
           <div
             className="screen-container"
             key={route.pathname + JSON.stringify(route.params)}
           >
             <Screen />
           </div>
-          <nav className="app-tabs" aria-label="Navigasi aplikasi">
-            {tabs.map(([path, label, icon]) => (
-              <button
-                key={path}
-                className={route.pathname === path ? "active" : ""}
-                onClick={() => router.push(path)}
-                aria-current={route.pathname === path ? "page" : undefined}
-              >
-                <span aria-hidden="true">{icon}</span>
-                {label}
-              </button>
-            ))}
-          </nav>
+          {tabs.some(([path]) => path === route.pathname) && (
+            <nav className="app-tabs" aria-label="Navigasi aplikasi">
+              {tabs.map(([path, label, icon]) => (
+                <button
+                  key={path}
+                  className={route.pathname === path ? "active" : ""}
+                  onClick={() => router.push(path)}
+                  aria-current={route.pathname === path ? "page" : undefined}
+                >
+                  <span aria-hidden="true">
+                    <Icon name={icon} size={22} />
+                  </span>
+                  {label}
+                </button>
+              ))}
+            </nav>
+          )}
         </section>
       </main>
     </>

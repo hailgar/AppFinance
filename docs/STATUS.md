@@ -287,3 +287,22 @@ Referensi resmi (16 November2026):
 - https://developer.android.com/studio/run/emulator-commandline
 - https://render.com/docs/free
 - https://www.koyeb.com/docs/reference/instances
+
+## Desain Android refined — 16 November 2026
+
+Pengguna menyetujui desain refined di percakapan Frontend Android dan meminta push.
+Perubahan berada pada feature branch `feat/refined-android-ui`, berbasis commit
+`65290f5` dari branch integrasi, untuk ditinjau melalui PR ke `feat/complete-mvp-integration`.
+
+- Diterapkan pada layar React Native produksi dan preview yang memakai layar tersebut:
+  kartu budget terpadu, navigasi dengan penanda aktif, daftar transaksi berikon,
+  pilihan jenis/kategori, filter ringkas, ringkasan kategori, editor budget dan jam reminder.
+- Tidak mengubah endpoint, autentikasi, stable command ID/revision, atau lifecycle reminder.
+  Perubahan filter jenis sekarang langsung berlaku pada rentang tanggal yang sudah diterapkan;
+  rentang/kategori tetap ditinjau lewat tombol Filter.
+- Pemeriksaan lokal: native autolinking guard, 4 tes guard, typecheck dan lint lulus;
+  68 tes FE lulus dan 7 HTTP opt-in dilewati. Compatibility Expo offline, ekspor Android
+  dan build preview standalone lulus. Peringatan config Firebase lokal belum tersedia
+  tetap membatasi native build; tidak ada klaim APK/deployment/login Google baru.
+- Preview tetap diberi banner data contoh permanen; ikon menggunakan font Ionicons
+  lokal yang sama, di-inline pada build standalone.

@@ -280,3 +280,43 @@ body {
     padding: 6px 10px;
   }
 }
+
+/* Approved refined Android visual system; the content is the production RN screen. */
+body {
+  background: #edf1ee;
+  color: #15251f;
+}
+.app-header {
+  background: #f7f8fa;
+  border-bottom: 0;
+  height: 70px;
+}
+.phone {
+  border-color: #e5ebe7;
+  border-radius: 28px;
+}
+.app-tabs {
+  border-top-color: #e5ebe7;
+  height: 82px;
+}
+.app-tabs button {
+  color: #66746e;
+  font-size: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.app-tabs button > span {
+  width: 58px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+}
+.app-tabs button.active > span {
+  background: #e9f4f0;
+}
+@media (max-width: 450px) {
+  .phone {
+    border-radius: 0;
+  }
+}

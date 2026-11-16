@@ -124,3 +124,20 @@ login, screenshot/rekaman finansial atau logcat sebagai artifact.
 CI75ff0f2: FE43821500170, BE43821500111, HTTP43821500339 semuanya success. Verifikasi kode
 Vercel baru kembali ditolak invalid or expired. Tidak ada URL backend/static READY, APK,
 Google live acceptance atau instalasi HP yang dinyatakan berhasil pada fase ini.
+
+## Refined Android UI — pemeriksaan 16 November 2026
+
+Perubahan visual yang disetujui pengguna diterapkan pada source native dan preview.
+`npm ci` mobile/preview, native guard, 4 tes guard, TypeScript, ESLint, 68 tes unit FE
+(7 HTTP opt-in skipped), compatibility Expo offline, ekspor Hermes Android, dan build
+preview standalone berhasil. Tidak ada perubahan dependensi runtime/API.
+Preview standalone kini menyertakan font ikon lokal di dalam HTML; warning ukuran
+bundle Vite diperkirakan karena font di-inline. Warning `use client` pada bundler
+preview tidak menyebabkan build gagal. Belum ada screenshot/TalkBack/teks besar
+Android fisik untuk desain ini; belum ada build APK atau deployment baru.
+
+Smoke DOM memakai bundle standalone layar produksi juga lulus: nilai dashboard
+Rp65.000, form/kategori, filter jenis/rentang riwayat, ringkasan bulanan, editor jam
+reminder dan mode budget. Lingkungan smoke menggunakan Happy DOM dengan API
+structuredClone standar Node; ini bukan verifikasi layout browser/Android atau
+penerimaan Firebase/Sheets nyata.

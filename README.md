@@ -92,3 +92,11 @@ Jalankan `npm ci --prefix mobile/preview`, lalu
 File `mobile/preview/dist/catat-harian-preview.html` dapat diunduh dari artifact
 Frontend checks. Instruksi dan setting hosting static di
 [README preview](mobile/preview/README.md). Ini bukan APK atau bukti integrasi Google.
+
+### Desain refined
+
+Desain yang disetujui pada 16 November 2026 diterapkan pada source Android:
+angka budget lebih tegas, baris transaksi berikon, pilihan jenis/kategori yang ringkas,
+dan navigasi dengan penanda aktif. Preview memakai komponen layar yang sama dan
+font ikon lokal; banner data contoh tetap terlihat. Status push/CI mengikuti PR desain,
+sementara penerimaan Google/Android nyata tetap dicatat terpisah di docs/STATUS.md.
