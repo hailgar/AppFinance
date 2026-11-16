@@ -8,7 +8,7 @@
 
 Implementasi backend berdasarkan `docs/01_PRD.md` dan `docs/02_API_DAN_DATA.md`: FastAPI, Firebase Authentication, dan ledger append-only Google Sheets. Paket ini berisi backend, tes, OpenAPI aktual, serta alat setup/perawatan. Frontend Android dan penjadwalan notifikasi dikerjakan di bagian proyek masing-masing.
 
-Status verifikasi: **57 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
+Status verifikasi: **58 tes lulus, 1 tes integrasi Google dilewati** pada Python 3.12 di Linux, menggunakan virtual environment terpisah. Integrasi nyata Firebase/Sheets belum dijalankan karena belum ada konfigurasi akun dan spreadsheet. Belum ada deployment atau perubahan pada spreadsheet pengguna.
 
 ## Yang sudah diimplementasikan
 
@@ -283,3 +283,9 @@ hailgars-projects (Hobby), berbeda dari koneksi API DOL. Upload static UI sedang
 pada verifikasi email yang ditolak invalid or expired. Tidak ada backend yang dideploy
 atau checkpoint/lease yang diubah untuk memaksakan Functions. Flow UI bukan provisioning
 identitas Google, host FastAPI atau deployment backend yang siap menerima data nyata.
+
+Catatan host gratis: Render Free kehilangan perubahan filesystem saat restart/redeploy
+atau spin-down dan tidak mendukung persistent disk. Koyeb Free juga tidak mendukung
+volume persisten. Keduanya tidak menggantikan host checkpoint sekarang tanpa rancangan
+storage/koordinasi tambahan. Tidak membuat akun/provider baru atau menonaktifkan checkpoint.
+Referensi: https://render.com/docs/free dan https://www.koyeb.com/docs/reference/instances.

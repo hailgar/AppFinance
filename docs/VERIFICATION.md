@@ -105,3 +105,22 @@ email; kode via form aman ditolak invalid or expired. Tidak ada status READY/URL
 terverifikasi; proses publikasi belum selesai. Tidak ada resend otomatis atau kode yang
 disimpan. Akun ini berbeda dari koneksi API DOL; error403 koneksi lama tetap berlaku.
 CI cfecc92: frontend43818053902, backend43818053909, HTTP43818053873 semuanya success.
+
+## Emulator API35 di runner publik
+
+Implementasi75ff0f2 benar-benar dijalankan di GitHub Actions. Android emulator environment
+run43821500154/job133145378757 success; KVM dan boot action success. Log helper menyatakan
+emulator_booted=true, api_level=35, abi=x86_64, google_play_services=true, passed=true,
+app_tested=false. Run push43821490514 juga success. Tidak ada app/APK terpasang pada
+preflight ini. Uji HP fisik tetap belum dilakukan. Tidak ada VM/larger runner berbayar.
+
+8 tes helper smoke baru passed/3 subtests; scripts/tests35 passed/10 subtests. Helper
+menolak target fisik, versi/image salah, APK tanpa bundle, launcher salah, UI login tidak
+muncul dan proses yang keluar. Skenario helper lokal memakai controlled adapters, bukan
+APK. Job emulator-smoke untuk APK standalone sudah disambungkan setelah job build preview,
+namun belum dieksekusi karena konfigurasi nyata/APK belum tersedia. Tidak menyimpan data
+login, screenshot/rekaman finansial atau logcat sebagai artifact.
+
+CI75ff0f2: FE43821500170, BE43821500111, HTTP43821500339 semuanya success. Verifikasi kode
+Vercel baru kembali ditolak invalid or expired. Tidak ada URL backend/static READY, APK,
+Google live acceptance atau instalasi HP yang dinyatakan berhasil pada fase ini.

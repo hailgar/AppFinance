@@ -180,3 +180,32 @@ Referensi resmi: https://docs.expo.dev/build-reference/apk/ dan
 https://docs.expo.dev/versions/v55.0.0/sdk/notifications/
 
 Aturan dispatch GitHub: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow
+
+## Emulator gratis di GitHub Actions
+
+Repository publik ini memakai runner standar ubuntu-latest (bukan larger runner).
+Workflow Android emulator environment berjalan pada perubahan workflow/helper dan
+manual setelah file terdaftar di main. Ia memeriksa KVM, boot Android API35 google_apis
+x86_64 serta ADB/Play services. Run43821500154 benar-benar success; ini bukti lingkungan
+emulator, belum bukti aplikasi terpasang. Tidak perlu akun layanan emulator berbayar.
+
+Setelah backend HTTPS, Firebase/OAuth dan signing tersedia, jalankan workflow Android
+internal APK dengan profil preview. Sesudah APK asli berhasil dibangun/upload, job
+emulator-smoke yang terpisah mengunduhnya, memasang, membuka activity, memeriksa layar
+Masuk dengan Google dari React Native serta proses tetap hidup20detik. Profil development
+membutuhkan Metro dan sengaja tidak diuji sebagai APK mandiri. Pemeriksaan ini tidak
+melakukan login/keuangan nyata atau menggantikan pengujian reminder pada HP fisik.
+
+Perintah helper pada emulator baru yang sesuai:
+
+```bash
+python scripts/android_emulator_smoke.py
+python scripts/android_emulator_smoke.py --apk /path/to/real-preview.apk --package id.catatharian.app
+```
+
+Mode pertama hanya preflight dan melaporkan app_tested=false. Helper membatasi ADB pada
+serial emulator; tidak clear data HP fisik. CI emulator tidak menerima secret signing,
+menyimpan logcat, XML layar atau screenshot akun sebagai artifact.
+
+Referensi: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+serta https://developer.android.com/studio/run/emulator-acceleration.

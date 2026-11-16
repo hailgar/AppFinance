@@ -71,7 +71,8 @@ atau arsitektur PR lain yang ditimpa. Tidak ada force-push atau perubahan main l
   Tidak ada akun baru, trial kredit, upgrade Spark atau resource berbayar dibuat.
 - Lokal: java/keytool ada; javac/SDK/adb/emulator/Gradle/az/Docker/gcloud tidak ada.
   Google runtime credentials, Expo token dan Azure deployment credentials tidak ada.
-- Emulator: tidak tersedia, belum diuji. HP fisik: tidak terhubung, belum diuji.
+- Emulator lokal: tidak tersedia. Emulator CI Android API35 kini berhasil boot;
+  aplikasi belum dipasang/diuji karena APK belum tersedia. HP fisik tidak terhubung, belum diuji.
   Reminder background/lock-screen/offline/reboot/force-stop/baterai tetap terbuka.
 
 ## Penilaian Vercel
@@ -163,6 +164,7 @@ Tidak ada mock yang dijadikan bukti penerimaan Google/Android nyata.
 | Build/deployment hardening | `c4a3f8f` |
 | Pratinjau UI browser | `4841812` |
 | Native compatibility/startup factory | `cfecc92` |
+| Emulator gratis/preflight dan APK smoke | `75ff0f2` |
 
 Commit fase penuntasan merujuk baseline di atas; SHA dan hasil CI aktual tersedia
 pada riwayat PR #2. Status ini tidak mengklaim deployment/APK/native acceptance selesai.
@@ -235,3 +237,53 @@ Sesudah verifikasi, tugas independen yang tetap memblokir penerimaan lengkap ada
 Google Cloud IAM/credential backend dan izin Sheet test, UID owner serta OAuth/signing
 Android, dan host FastAPI satu penulis dengan disk persisten. Login Vercel tidak
 menyediakan credential Google atau mengubah asumsi runtime Functions.
+
+## Emulator gratis — hasil eksekusi nyata
+
+Pengguna meminta jalur emulator gratis dan kelanjutan deployment. Koordinator menugaskan
+free_android_emulator memiliki android-emulator-check.yml, job APK smoke dan helper/tes;
+file dikembalikan ke koordinator sebelum commit. Perubahan di-push sebagai75ff0f2.
+
+Runner Ubuntu standar pada repository AppFinance publik dipilih, bukan larger runner,
+layanan device farm, atau VM baru. Workflow memeriksa KVM lalu menjalankan emulator
+API35 google_apis/x86_64 tanpa secret. Preflight benar-benar dieksekusi di GitHub:
+[run43821500154](https://github.com/hailgar/AppFinance/actions/runs/43821500154) success,
+job133145378757, termasuk pemeriksaan akses KVM. Respons helper aktual:
+
+```json
+{"abi":"x86_64","api_level":35,"app_tested":false,"emulator_booted":true,"google_play_services":true,"passed":true}
+```
+
+Run push43821490514 juga success. CI FE43821500170, BE43821500111 dan HTTP43821500339
+success pada commit yang sama. Tidak menganggap boot Android sebagai penerimaan app.
+
+Job terpisah emulator-smoke pada android-internal.yml menunggu build profil preview
+berhasil. Job mengambil APK asli, menolak APK development tanpa bundled JS, memasang
+ke emulator baru, memeriksa UI React Native signed-out dan proses hidup20detik. Tidak
+mewarisi secret signing/Google dari job build, tidak menyimpan logcat, XML atau screenshot
+akun. Job ini belum berjalan karena belum ada APK. Login Google, alur finansial dan
+notifikasi Android fisik belum diuji.
+
+8 tes helper baru passed; scripts/tests total35 passed/10 subtests. Smoke lokal exit1
+karena adb tidak tersedia, sesuai kondisi lokal; tidak diklaim sebagai emulator lokal.
+GitHub workflow dieksekusi saat push; workflow APK manual masih perlu terdaftar di
+main melalui review/merge serta konfigurasi/secrets nyata sebelum dapat dipakai.
+
+Vercel: satu resend kode diminta melalui kontrol resmi atas instruksi melanjutkan,
+pengguna mengisi form aman; website kembali menolak invalid or expired. Percobaan
+otomatis dihentikan, halaman dipertahankan untuk pengguna. Tidak ada READY/URL deploy
+terverifikasi. Kode tidak disalin ke source/artifact. Koneksi API tetap akun DOL,
+sesi browser hailgar; keduanya tidak disamakan.
+
+Firebase CLI15.36.0 diperiksa lagi: tidak ada akun terotorisasi. Tidak menganggap sesi
+browser Firebase sebagai credential CLI/backend. IAM/config/OAuth/UID/signing dan host
+backend persisten tetap memblokir deployment nyata dan APK. Render Free dan Koyeb Free
+juga tidak menawarkan persistent disk/volume untuk instance gratis; tidak menambah akun
+atau mematikan checkpoint untuk memakai host yang tidak memenuhi persyaratan runtime.
+
+Referensi resmi (16 November2026):
+- https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+- https://developer.android.com/studio/run/emulator-acceleration
+- https://developer.android.com/studio/run/emulator-commandline
+- https://render.com/docs/free
+- https://www.koyeb.com/docs/reference/instances
